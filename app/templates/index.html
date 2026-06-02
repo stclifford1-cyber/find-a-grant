@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 
 {% block content %}
-<header class="relative mb-8 rounded-2xl border border-gray-500 bg-gray-200 px-6 py-6 shadow-sm">
-  <div>
-    <div>
+<header class="relative mb-8 overflow-hidden rounded-2xl border border-gray-500 bg-gray-200 px-6 py-6 shadow-sm">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div class="min-w-0">
   <p class="text-xs font-semibold uppercase tracking-[0.2em] text-gray-700">Find a Grant</p>
   <h1 class="mt-2 text-4xl font-bold tracking-tight text-gray-900">Find a Grant</h1>
   <p class="mt-2 text-base text-gray-700">UK/EU funding competitions for SMEs</p>
     </div>
-    <div class="absolute -right-8 top-1/2 -translate-y-1/2">
+    <div class="flex shrink-0 justify-end">
       <img src="{{ request.url_for('static', path='img/GrantFinder-logo-transparent.png') }}"
            alt="GrantFinder logo"
-           class="w-[504px] h-auto object-contain" />
+           class="h-auto w-48 max-w-full object-contain sm:w-64 lg:w-80" />
     </div>
   </div>
 </header>
@@ -91,7 +91,7 @@
         class="w-full rounded-lg border border-gray-400 bg-white px-3 py-2 text-sm focus:border-gray-600 focus:outline-none"
       />
     </div>
-    <div class="col-span-12 mt-2 flex flex-col gap-3 border-t border-gray-300 pt-4 lg:flex-row lg:items-end lg:justify-between">
+    <div class="mt-2 flex flex-col gap-3 border-t border-gray-300 pt-4 lg:col-span-12 lg:flex-row lg:items-end lg:justify-between">
       <div>
         <p class="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-700">Funding sources</p>
         <div class="flex flex-wrap gap-2" id="source-chips">
