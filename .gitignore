@@ -1,0 +1,31 @@
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local databases and logs
+*.db
+*.sqlite
+*.sqlite3
+logs/
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Backup/editor files
+*.bak
+*.bak*
+*.tmp
+*~

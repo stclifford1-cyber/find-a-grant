@@ -1,0 +1,30 @@
+<div class="rounded-lg border border-gray-400 bg-gray-100 p-4">
+  {% if opportunity.description %}
+    <p class="text-sm leading-relaxed text-gray-900">{{ opportunity.description }}</p>
+  {% endif %}
+  {% if source_reference %}
+    <div class="mt-4 rounded-lg border border-gray-300 bg-white p-3">
+      <p class="text-xs uppercase tracking-wide text-gray-600">EU reference</p>
+      <div class="mt-1 flex flex-wrap items-center gap-2">
+        <code class="rounded border border-gray-300 bg-gray-100 px-2 py-1 text-sm font-semibold text-gray-900">{{ source_reference }}</code>
+        <button
+          type="button"
+          class="inline-flex items-center rounded-lg border border-gray-500 bg-white px-3 py-1.5 text-xs font-semibold text-gray-900 hover:bg-gray-100"
+          onclick="navigator.clipboard.writeText('{{ source_reference }}'); this.textContent = 'Copied';"
+        >
+          Copy reference
+        </button>
+      </div>
+    </div>
+  {% endif %}
+  <div class="mt-4 flex flex-wrap items-center gap-3">
+    <a
+      href="{{ opportunity.url }}"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="inline-flex items-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-black"
+    >
+      {{ "Find in EU portal" if opportunity.source == "horizon_europe" else "Official listing" }}
+    </a>
+  </div>
+</div>

@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block content %}
+<header class="relative mb-8 rounded-2xl border border-gray-500 bg-gray-200 px-6 py-6 shadow-sm">
+  <div>
+    <div>
+  <p class="text-xs font-semibold uppercase tracking-[0.2em] text-gray-700">Find a Grant</p>
+  <h1 class="mt-2 text-4xl font-bold tracking-tight text-gray-900">Find a Grant</h1>
+  <p class="mt-2 text-base text-gray-700">UK/EU funding competitions for SMEs</p>
+    </div>
+    <div class="absolute -right-8 top-1/2 -translate-y-1/2">
+      <img src="{{ request.url_for('static', path='img/grantfinder-logo-transparent.png') }}"
+           alt="GrantFinder logo"
+           class="w-[504px] h-auto object-contain" />
+    </div>
+  </div>
+</header>
+
+<section class="mb-8 rounded-2xl border border-gray-500 bg-gray-100 p-5 shadow-sm">
+  <form
+    id="filters"
+    class="grid grid-cols-1 gap-4 items-end lg:grid-cols-12"
+    method="get"
+    hx-get="/opportunities"
+    hx-target="#results"
+    hx-swap="innerHTML"
+    hx-trigger="submit, keyup changed delay:350ms, change"
+  >
+    <div class="lg:col-span-2">
+      <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-700">Keyword</label>
+      <input
+        name="keyword"
+        value="{{ filters.keyword }}"
+        type="text"
+        placeholder="Title or description"
+        class="w-full rounded-lg border border-gray-400 bg-white px-3 py-2 text-sm focus:border-gray-600 focus:outline-none"
+      />
+    </div>
+
+    <div class="lg:col-span-2">
+      <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-700">Opens On or After</label>
+      <input
+        name="opens_from"
+        value="{{ filters.opens_from }}"
+        type="date"
+        class="w-full rounded-lg border border-gray-400 bg-white px-3 py-2 text-sm focus:border-gray-600 focus:outline-none"
+      />
+    </div>
+
+    <div class="lg:col-span-2">
+      <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-700">Closes By</label>
+      <input
+        name="closes_to"
+        value="{{ filters.closes_to }}"
+        type="date"
+        class="w-full rounded-lg border border-gray-400 bg-white px-3 py-2 text-sm focus:border-gray-600 focus:outline-none"
+      />
+    </div>
+
+    <div class="lg:col-span-2">
+      <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-700">Sector or Niche</label>
+      <input
+        name="sector_or_niche"
+        value="{{ filters.sector_or_niche }}"
+        type="text"
+        placeholder="e.g. manufacturing"
+        class="w-full rounded-lg border border-gray-400 bg-white px-3 py-2 text-sm focus:border-gray-600 focus:outline-none"
+      />
+    </div>
+
+    <div class="lg:col-span-1">
+      <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-700">Min Funding</label>
+      <input
+        name="min_funding"
+        value="{{ filters.min_funding }}"
+        type="number"
+        step="1"
+        min="0"
+        class="w-full rounded-lg border border-gray-400 bg-white px-3 py-2 text-sm focus:border-gray-600 focus:outline-none"
+      />
+    </div>
+
+    <div class="lg:col-span-1">
+      <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-700">Max Funding</label>
+      <input
+        name="max_funding"
+        value="{{ filters.max_funding }}"
+        type="number"
+        step="1"
+        min="0"
+        class="w-full rounded-lg border border-gray-400 bg-white px-3 py-2 text-sm focus:border-gray-600 focus:outline-none"
+      />
+    </div>
+    <div class="col-span-12 mt-2 flex flex-col gap-3 border-t border-gray-300 pt-4 lg:flex-row lg:items-end lg:justify-between">
+      <div>
+        <p class="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-700">Funding sources</p>
+        <div class="flex flex-wrap gap-2" id="source-chips">
+          <button
+            type="button"
+            id="source-all"
+            class="inline-flex min-h-10 items-center rounded-lg border px-4 py-2 text-sm font-semibold transition"
+            onclick="setAllSources()"
+          >
+            All
+          </button>
+          {% for source in sources %}
+            <label class="cursor-pointer">
+              <input
+                class="peer sr-only source-checkbox"
+                type="checkbox"
+                name="source"
+                value="{{ source['value'] }}"
+                {% if source['value'] in filters.sources %}checked{% endif %}
+                onchange="submitSourceFilters()"
+              />
+              <span class="inline-flex min-h-10 items-center rounded-lg border border-gray-400 bg-white px-4 py-2 text-sm font-semibold text-gray-900 transition peer-checked:border-blue-700 peer-checked:bg-blue-600 peer-checked:text-white hover:bg-gray-100 peer-checked:hover:bg-blue-700">
+                {{ source['label'] }}
+              </span>
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="flex justify-end gap-3">
+        <button
+          type="button"
+          class="inline-flex items-center rounded-lg border border-gray-500 bg-slate-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-600"
+          onclick="document.getElementById('filters').reset(); updateSourceChips(); htmx.ajax('GET', '/opportunities', {target: '#results', swap: 'innerHTML'});"
+        >
+          Clear
+        </button>
+        <button
+          type="submit"
+          class="inline-flex items-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+        >
+          Search
+        </button>
+      </div>
+    </div>
+  </form>
+</section>
+
+<main id="results">
+  {% include "_opportunity_list.html" %}
+</main>
+<script>
+  function sourceBoxes() {
+    return Array.from(document.querySelectorAll(".source-checkbox"));
+  }
+
+  function updateSourceChips() {
+    const anySelected = sourceBoxes().some((box) => box.checked);
+    const allChip = document.getElementById("source-all");
+    if (!allChip) return;
+    allChip.className = anySelected
+      ? "inline-flex min-h-10 items-center rounded-lg border border-gray-400 bg-white px-4 py-2 text-sm font-semibold text-gray-900 transition hover:bg-gray-100"
+      : "inline-flex min-h-10 items-center rounded-lg border border-blue-700 bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700";
+  }
+
+  function setAllSources() {
+    sourceBoxes().forEach((box) => {
+      box.checked = false;
+    });
+    updateSourceChips();
+    submitFilters();
+  }
+
+  function submitFilters() {
+    const form = document.getElementById("filters");
+    if (!form) return;
+    if (window.htmx) {
+      htmx.trigger(form, "submit");
+    } else {
+      form.requestSubmit();
+    }
+  }
+
+  function submitSourceFilters() {
+    updateSourceChips();
+    submitFilters();
+  }
+
+  async function toggleOpportunityDetails(button) {
+    const expanded = button.dataset.expanded === "true";
+    const nextExpanded = !expanded;
+    const target = document.getElementById(button.dataset.targetId);
+    if (!target) return;
+
+    button.dataset.expanded = String(nextExpanded);
+    button.textContent = nextExpanded ? "Read less" : "Read more";
+
+    const response = await fetch(`${button.dataset.detailsUrl}?expanded=${nextExpanded}`);
+    target.innerHTML = await response.text();
+  }
+
+  document.addEventListener("DOMContentLoaded", updateSourceChips);
+</script>
+{% endblock %}

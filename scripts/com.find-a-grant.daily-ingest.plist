@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.find-a-grant.daily-ingest</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/simonclifford/projects/find-a-grant/scripts/run_daily_ingest.sh</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/simonclifford/projects/find-a-grant</string>
+
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>6</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>/Users/simonclifford/projects/find-a-grant/logs/daily-ingest.out.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/Users/simonclifford/projects/find-a-grant/logs/daily-ingest.err.log</string>
+</dict>
+</plist>

@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title or "Find a Grant" }}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <style>
+    body {
+      font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-[#d8eef5] text-gray-900">
+  <div class="mx-auto max-w-[1200px] px-4 py-8 lg:px-8 lg:py-10">
+    {% block content %}{% endblock %}
+    <footer class="mt-10 border-t border-[#123a5a]/20 pt-4 text-sm text-[#123a5a]">
+      Funding data last updated: {{ last_successful_ingest or "Not yet updated" }}
+    </footer>
+  </div>
+</body>
+</html>
