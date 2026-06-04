@@ -15,13 +15,17 @@ from .models import Opportunity
 BASE = "https://konfer.online"
 API = "https://api.konfer.online/api/search/fundingopportunities"
 SOURCE = "konfer"
-PAGE_SIZE = 12
+PAGE_SIZE = 90
 
 HEADERS = {
-    "Accept": "application/json",
+    "Accept": "application/json, text/plain, */*",
     "Origin": BASE,
-    "Referer": f"{BASE}/fundings",
-    "User-Agent": "find-a-grant-ingester/0.1",
+    "Referer": f"{BASE}/funding",
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/125.0.0.0 Safari/537.36"
+    ),
 }
 
 
@@ -83,7 +87,13 @@ def is_business_connect_url(value: str | None) -> bool:
 
 
 def fetch_page(page: int = 1) -> dict:
-    response = requests.get(API, params={"page": page}, headers=HEADERS, timeout=25)
+    params = {
+        "q": "",
+        "page": page,
+        "itemsRequired": PAGE_SIZE,
+        "sortBy": "openDate",
+    }
+    response = requests.get(API, params=params, headers=HEADERS, timeout=25)
     response.raise_for_status()
     return response.json()
 

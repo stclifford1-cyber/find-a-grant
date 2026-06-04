@@ -100,3 +100,36 @@ def test_konfer_crawl_skips_business_connect_funding_urls(monkeypatch) -> None:
     items = ingest_konfer.crawl()
 
     assert [item["id"] for item in items] == ["konfer:native"]
+
+
+def test_fetch_page_uses_konfer_frontend_search_params(monkeypatch) -> None:
+    captured = {}
+
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            return {"total": 0, "results": []}
+
+    def fake_get(url, params, headers, timeout):
+        captured["url"] = url
+        captured["params"] = params
+        captured["headers"] = headers
+        captured["timeout"] = timeout
+        return FakeResponse()
+
+    monkeypatch.setattr(ingest_konfer.requests, "get", fake_get)
+
+    data = ingest_konfer.fetch_page(3)
+
+    assert data == {"total": 0, "results": []}
+    assert captured["url"] == ingest_konfer.API
+    assert captured["params"] == {
+        "q": "",
+        "page": 3,
+        "itemsRequired": ingest_konfer.PAGE_SIZE,
+        "sortBy": "openDate",
+    }
+    assert captured["headers"]["Referer"] == "https://konfer.online/funding"
+    assert captured["timeout"] == 25
