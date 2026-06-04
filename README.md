@@ -33,7 +33,7 @@ All current sources have repeatable ingestion pipelines and are included in the 
 - Daily ingest script, macOS LaunchAgent helper, and GitHub Actions workflow.
 - Production-ready `DATABASE_URL` support for Neon Postgres.
 - Protected cloud ingest endpoint using `CRON_SECRET`.
-- Footer freshness timestamp showing the last successful ingest and the latest Konfer non-duplicate check.
+- Top-of-page source health status showing the last successful ingest and relevant zero-result source checks.
 
 ## Project Structure
 
@@ -198,16 +198,17 @@ CRON_SECRET
 
 `DATABASE_URL` is required by the scheduled ingest. `CRON_SECRET` protects the manual `/api/ingest` endpoint and is included in the workflow environment for consistency, though the scheduled workflow writes to Neon directly rather than calling that endpoint.
 
-The page footer renders the database freshness signal:
+The top of the page renders the database freshness signal:
 
 ```text
-Funding data last updated: 2 June 2026, 06:04 UTC
+Last updated: 2 June 2026, 06:04 UTC
+Sources checked successfully
 ```
 
-A stale timestamp is the public health check that the scheduled ingest did not complete successfully. The footer also renders the latest Konfer check, including when Konfer was checked successfully but returned only duplicate Business Connect records:
+A stale timestamp is the public health check that the scheduled ingest did not complete successfully. The page also renders relevant source notes, including when Konfer was checked successfully but returned only duplicate Business Connect records:
 
 ```text
-Konfer last checked: 4 June 2026, 12:51 UTC; 0 non-duplicated records found.
+Konfer checked successfully: no unique opportunities found.
 ```
 
 ## Deployment Direction
@@ -228,7 +229,7 @@ The next deployment phase should:
 4. Deploy to Vercel from GitHub.
 5. Run the GitHub Actions `Daily ingest` workflow manually once, or wait for the next scheduled run.
 6. Confirm the workflow logs show a successful full ingest.
-7. Confirm production data counts, public UI results, and the footer freshness timestamp.
+7. Confirm production data counts, public UI results, and the top-of-page freshness/source status.
 
 ## Notes
 

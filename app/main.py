@@ -170,10 +170,9 @@ def get_konfer_check_status(db: Session) -> Optional[str]:
         logger.warning("Invalid Konfer check metadata: %r", row.value)
         return None
 
-    checked = format_ingest_timestamp(checked_at)
     if count == 0:
-        return f"Konfer last checked: {checked}; 0 non-duplicated records found."
-    return f"Konfer last checked: {checked}; {count} non-duplicated records found."
+        return "Konfer checked successfully: no unique opportunities found."
+    return None
 
 
 def require_cron_secret(request: Request) -> None:

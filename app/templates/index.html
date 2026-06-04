@@ -7,6 +7,21 @@
   <p class="text-xs font-semibold uppercase tracking-[0.2em] text-gray-700">Find a Grant</p>
   <h1 class="mt-2 text-4xl font-bold tracking-tight text-gray-900">Find a Grant</h1>
   <p class="mt-2 text-base text-gray-700">UK/EU funding competitions for SMEs</p>
+      <div class="mt-4 flex flex-wrap gap-2 text-sm text-[#123a5a]">
+        <span class="inline-flex items-center rounded-lg border border-[#123a5a]/30 bg-white/70 px-3 py-1.5 font-semibold">
+          Last updated: {{ last_successful_ingest or "Not yet updated" }}
+        </span>
+        {% if last_successful_ingest != "Not yet updated" %}
+          <span class="inline-flex items-center rounded-lg border border-[#123a5a]/30 bg-white/70 px-3 py-1.5 font-semibold">
+            Sources checked successfully
+          </span>
+        {% endif %}
+        {% if konfer_check_status %}
+          <span class="inline-flex items-center rounded-lg border border-[#123a5a]/30 bg-white/70 px-3 py-1.5 font-semibold">
+            {{ konfer_check_status }}
+          </span>
+        {% endif %}
+      </div>
     </div>
     <div class="flex shrink-0 justify-end">
       <img src="{{ request.url_for('static', path='img/grant-logo.png') }}"

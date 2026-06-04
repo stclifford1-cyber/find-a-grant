@@ -80,7 +80,8 @@ def test_homepage_renders_last_successful_ingest_timestamp(monkeypatch) -> None:
         main.app.dependency_overrides.clear()
 
     assert response.status_code == 200
-    assert "Funding data last updated: 2 June 2026, 06:04 UTC" in response.text
+    assert "Last updated: 2 June 2026, 06:04 UTC" in response.text
+    assert "Sources checked successfully" in response.text
 
 
 def test_homepage_renders_konfer_zero_non_duplicate_status(monkeypatch) -> None:
@@ -110,4 +111,4 @@ def test_homepage_renders_konfer_zero_non_duplicate_status(monkeypatch) -> None:
         main.app.dependency_overrides.clear()
 
     assert response.status_code == 200
-    assert "Konfer last checked: 4 June 2026, 12:51 UTC; 0 non-duplicated records found." in response.text
+    assert "Konfer checked successfully: no unique opportunities found." in response.text
