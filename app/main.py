@@ -1,5 +1,6 @@
 import logging
 import os
+import json
 import re
 import secrets
 import time
@@ -79,6 +80,7 @@ CORE_SOURCE_FILTERS = ("innovate_uk", "ukri", "horizon_europe", "konfer")
 DEFAULT_INGEST_TIMEOUT_SECONDS = 300.0
 INGEST_TIMEOUT_ENV = "INGEST_TIMEOUT_SECONDS"
 LAST_SUCCESSFUL_INGEST_KEY = "last_successful_ingest_at"
+LAST_KONFER_CHECK_KEY = "source_check:konfer"
 
 
 def source_key(value: str) -> str:
@@ -154,6 +156,24 @@ def get_last_successful_ingest(db: Session) -> Optional[datetime]:
     except ValueError:
         logger.warning("Invalid last successful ingest timestamp: %r", row.value)
         return None
+
+
+def get_konfer_check_status(db: Session) -> Optional[str]:
+    row = db.query(AppMetadata).filter(AppMetadata.key == LAST_KONFER_CHECK_KEY).one_or_none()
+    if not row:
+        return None
+    try:
+        data = json.loads(row.value)
+        checked_at = datetime.fromisoformat(data["checked_at"])
+        count = int(data["non_duplicate_records"])
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+        logger.warning("Invalid Konfer check metadata: %r", row.value)
+        return None
+
+    checked = format_ingest_timestamp(checked_at)
+    if count == 0:
+        return f"Konfer last checked: {checked}; 0 non-duplicated records found."
+    return f"Konfer last checked: {checked}; {count} non-duplicated records found."
 
 
 def require_cron_secret(request: Request) -> None:
@@ -329,6 +349,7 @@ def index(
             "grouped": grouped,
             "sources": get_sources(db),
             "last_successful_ingest": format_ingest_timestamp(get_last_successful_ingest(db)),
+            "konfer_check_status": get_konfer_check_status(db),
             "filters": {
                 "keyword": keyword or "",
                 "sources": selected_sources,

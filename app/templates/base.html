@@ -16,7 +16,10 @@
   <div class="mx-auto max-w-[1200px] px-4 py-8 lg:px-8 lg:py-10">
     {% block content %}{% endblock %}
     <footer class="mt-10 border-t border-[#123a5a]/20 pt-4 text-sm text-[#123a5a]">
-      Funding data last updated: {{ last_successful_ingest or "Not yet updated" }}
+      <p>Funding data last updated: {{ last_successful_ingest or "Not yet updated" }}</p>
+      {% if konfer_check_status %}
+        <p class="mt-1">{{ konfer_check_status }}</p>
+      {% endif %}
     </footer>
   </div>
 </body>

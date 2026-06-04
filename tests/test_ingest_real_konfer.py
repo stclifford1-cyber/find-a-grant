@@ -1,3 +1,4 @@
+import json
 from datetime import date, datetime, timezone
 
 from sqlalchemy import create_engine
@@ -5,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app import ingest_konfer
 from app.database import Base
-from app.models import Opportunity
+from app.models import AppMetadata, Opportunity
 
 
 KONFER_RECORD = {
@@ -100,6 +101,27 @@ def test_konfer_crawl_skips_business_connect_funding_urls(monkeypatch) -> None:
     items = ingest_konfer.crawl()
 
     assert [item["id"] for item in items] == ["konfer:native"]
+
+
+def test_konfer_run_records_non_duplicate_check_count(monkeypatch) -> None:
+    engine = create_engine("sqlite:///:memory:")
+    Base.metadata.create_all(bind=engine)
+    local_session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    monkeypatch.setattr(ingest_konfer, "SessionLocal", local_session)
+    monkeypatch.setattr(ingest_konfer, "crawl", lambda max_pages=20: [])
+    monkeypatch.setattr(ingest_konfer, "upsert", lambda items, mark_stale=True: 0)
+
+    changed = ingest_konfer.run()
+
+    db = local_session()
+    try:
+        row = db.query(AppMetadata).filter(AppMetadata.key == ingest_konfer.LAST_KONFER_CHECK_KEY).one()
+        data = json.loads(row.value)
+        assert changed == 0
+        assert data["non_duplicate_records"] == 0
+        assert datetime.fromisoformat(data["checked_at"]).tzinfo is not None
+    finally:
+        db.close()
 
 
 def test_fetch_page_uses_konfer_frontend_search_params(monkeypatch) -> None:

@@ -12,7 +12,7 @@ All current sources have repeatable ingestion pipelines and are included in the 
 | --- | --- | --- |
 | Innovate UK Apply for Funding | `app.ingest_innovateuk` | Main Innovate UK competition source. |
 | Innovate UK Business Connect | `app.ingest_iuk_business_connect` | Business Connect opportunities are normalised under the Innovate UK filter. |
-| Konfer | `app.ingest_konfer` | Included as a standing source. If Konfer returns no current opportunities, the filter remains visible but results may be empty. |
+| Konfer | `app.ingest_konfer` | Included as a standing source. Konfer records that point to Business Connect opportunities are skipped to avoid duplicates under two source labels. |
 | Horizon Europe | `app.ingest_horizon_europe` | Uses the EU Funding & Tenders search API and stores euro values with approximate GBP conversion. |
 | UKRI | `app.ingest_ukri` | Uses UKRI Funding Finder. Innovate-only UKRI listings are skipped to avoid duplicate Innovate UK competitions. |
 
@@ -33,7 +33,7 @@ All current sources have repeatable ingestion pipelines and are included in the 
 - Daily ingest script, macOS LaunchAgent helper, and GitHub Actions workflow.
 - Production-ready `DATABASE_URL` support for Neon Postgres.
 - Protected cloud ingest endpoint using `CRON_SECRET`.
-- Footer freshness timestamp showing the last successful ingest.
+- Footer freshness timestamp showing the last successful ingest and the latest Konfer non-duplicate check.
 
 ## Project Structure
 
@@ -119,7 +119,7 @@ pytest
 Current expected result:
 
 ```text
-28 passed
+31 passed
 ```
 
 ## Current Database
@@ -204,7 +204,11 @@ The page footer renders the database freshness signal:
 Funding data last updated: 2 June 2026, 06:04 UTC
 ```
 
-A stale timestamp is the public health check that the scheduled ingest did not complete successfully.
+A stale timestamp is the public health check that the scheduled ingest did not complete successfully. The footer also renders the latest Konfer check, including when Konfer was checked successfully but returned only duplicate Business Connect records:
+
+```text
+Konfer last checked: 4 June 2026, 12:51 UTC; 0 non-duplicated records found.
+```
 
 ## Deployment Direction
 
@@ -231,4 +235,4 @@ The next deployment phase should:
 - Innovate UK and Business Connect are shown together under the Innovate UK filter.
 - UKRI ingest intentionally avoids Innovate-only listings to reduce duplication.
 - Horizon Europe links use a narrower EU Funding & Tenders search URL and expose EU references where available.
-- Konfer is retained as a source even when no live opportunities are returned.
+- Konfer is retained as a source even when no live non-duplicated opportunities are returned.

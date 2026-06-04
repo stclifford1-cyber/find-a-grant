@@ -81,3 +81,33 @@ def test_homepage_renders_last_successful_ingest_timestamp(monkeypatch) -> None:
 
     assert response.status_code == 200
     assert "Funding data last updated: 2 June 2026, 06:04 UTC" in response.text
+
+
+def test_homepage_renders_konfer_zero_non_duplicate_status(monkeypatch) -> None:
+    _, local_session = _session_factory()
+    db = local_session()
+    db.add(
+        AppMetadata(
+            key=main.LAST_KONFER_CHECK_KEY,
+            value='{"checked_at": "2026-06-04T12:51:00+00:00", "non_duplicate_records": 0}',
+        )
+    )
+    db.commit()
+    db.close()
+
+    def override_get_db():
+        session = local_session()
+        try:
+            yield session
+        finally:
+            session.close()
+
+    main.app.dependency_overrides[main.get_db] = override_get_db
+    try:
+        with TestClient(main.app) as client:
+            response = client.get("/")
+    finally:
+        main.app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert "Konfer last checked: 4 June 2026, 12:51 UTC; 0 non-duplicated records found." in response.text

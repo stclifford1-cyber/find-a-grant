@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import html
+import json
 import re
 from datetime import date, datetime, timezone
 from typing import Optional
@@ -10,12 +11,13 @@ import requests
 from bs4 import BeautifulSoup
 
 from .database import SessionLocal
-from .models import Opportunity
+from .models import AppMetadata, Opportunity
 
 BASE = "https://konfer.online"
 API = "https://api.konfer.online/api/search/fundingopportunities"
 SOURCE = "konfer"
 PAGE_SIZE = 90
+LAST_KONFER_CHECK_KEY = "source_check:konfer"
 
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
@@ -233,9 +235,33 @@ def upsert(items: list[dict], mark_stale: bool = True) -> int:
         db.close()
 
 
+def record_konfer_check(non_duplicate_records: int, timestamp: datetime | None = None) -> None:
+    db = SessionLocal()
+    try:
+        value = json.dumps(
+            {
+                "checked_at": (timestamp or datetime.now(timezone.utc)).astimezone(timezone.utc).isoformat(),
+                "non_duplicate_records": non_duplicate_records,
+            }
+        )
+        row = db.query(AppMetadata).filter(AppMetadata.key == LAST_KONFER_CHECK_KEY).one_or_none()
+        if row:
+            row.value = value
+        else:
+            db.add(AppMetadata(key=LAST_KONFER_CHECK_KEY, value=value))
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
+
+
 def run(max_pages: int = 20) -> int:
     items = crawl(max_pages=max_pages)
-    return upsert(items, mark_stale=True)
+    changed = upsert(items, mark_stale=True)
+    record_konfer_check(len(items))
+    return changed
 
 
 if __name__ == "__main__":
