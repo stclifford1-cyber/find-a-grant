@@ -181,7 +181,7 @@ The daily production refresh runs from:
 .github/workflows/daily-ingest.yml
 ```
 
-It runs at about 06:00 UTC and can also be started manually from GitHub Actions. The workflow installs dependencies and runs:
+It runs at about 06:17 UTC and can also be started manually from GitHub Actions. The off-hour minute reduces the chance of GitHub Actions delaying or dropping the scheduled run during top-of-hour load. The workflow installs dependencies and runs:
 
 ```bash
 python -m app.ingest_all
