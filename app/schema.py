@@ -12,17 +12,23 @@ EXTRA_COLUMNS = {
     "funding_max_native": Float,
     "exchange_rate": Float,
     "exchange_rate_date": Date,
+    "geographic_scope": String,
 }
+
+
+def _opportunities_columns(bind) -> set[str]:
+    inspector = inspect(bind)
+    if Opportunity.__tablename__ not in inspector.get_table_names():
+        return set()
+    return {column["name"] for column in inspector.get_columns(Opportunity.__tablename__)}
 
 
 def ensure_database_schema(bind) -> None:
     Base.metadata.create_all(bind=bind)
 
-    inspector = inspect(bind)
-    if Opportunity.__tablename__ not in inspector.get_table_names():
+    existing = _opportunities_columns(bind)
+    if not existing:
         return
-
-    existing = {column["name"] for column in inspector.get_columns(Opportunity.__tablename__)}
     missing = [name for name in EXTRA_COLUMNS if name not in existing]
     if not missing:
         return
@@ -31,3 +37,27 @@ def ensure_database_schema(bind) -> None:
         for name in missing:
             column_type = EXTRA_COLUMNS[name]().compile(dialect=bind.dialect)
             connection.execute(text(f"ALTER TABLE {Opportunity.__tablename__} ADD COLUMN {name} {column_type}"))
+
+
+def migrate_geographic_scope(bind) -> dict[str, int | bool]:
+    Base.metadata.create_all(bind=bind)
+
+    if bind.dialect.name == "postgresql":
+        with bind.begin() as connection:
+            connection.execute(text("ALTER TABLE opportunities ADD COLUMN IF NOT EXISTS geographic_scope TEXT"))
+    elif "geographic_scope" not in _opportunities_columns(bind):
+        with bind.begin() as connection:
+            connection.execute(text("ALTER TABLE opportunities ADD COLUMN geographic_scope TEXT"))
+
+    geographic_scope_present = "geographic_scope" in _opportunities_columns(bind)
+    with bind.connect() as connection:
+        total_rows = connection.execute(text("SELECT COUNT(*) FROM opportunities")).scalar_one()
+        populated_rows = connection.execute(
+            text("SELECT COUNT(*) FROM opportunities WHERE geographic_scope IS NOT NULL")
+        ).scalar_one()
+
+    return {
+        "geographic_scope_present": geographic_scope_present,
+        "total_rows": int(total_rows),
+        "geographic_scope_populated_rows": int(populated_rows),
+    }

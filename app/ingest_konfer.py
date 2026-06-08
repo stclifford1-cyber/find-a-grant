@@ -10,8 +10,10 @@ from urllib.parse import urlparse
 import requests
 from bs4 import BeautifulSoup
 
-from .database import SessionLocal
+from .database import SessionLocal, engine
+from .geography import classify_geographic_scope
 from .models import AppMetadata, Opportunity
+from .schema import ensure_database_schema
 
 BASE = "https://konfer.online"
 API = "https://api.konfer.online/api/search/fundingopportunities"
@@ -167,6 +169,7 @@ def crawl(max_pages: int = 20) -> list[dict]:
 
 
 def upsert(items: list[dict], mark_stale: bool = True) -> int:
+    ensure_database_schema(engine)
     db = SessionLocal()
     now = datetime.now(timezone.utc)
     changed = 0
@@ -178,6 +181,7 @@ def upsert(items: list[dict], mark_stale: bool = True) -> int:
             if status == "expired":
                 continue
 
+            geographic_scope = item.get("geographic_scope") or classify_geographic_scope(item)
             seen_ids.add(item["id"])
             existing = db.query(Opportunity).filter(Opportunity.id == item["id"]).one_or_none()
             if existing:
@@ -190,6 +194,7 @@ def upsert(items: list[dict], mark_stale: bool = True) -> int:
                 existing.funding_max = item.get("funding_max")
                 existing.sector_tags = item.get("sector_tags")
                 existing.niche_tags = item.get("niche_tags")
+                existing.geographic_scope = geographic_scope
                 existing.summary = item.get("summary")
                 existing.description = item["description"]
                 existing.status = status
@@ -207,6 +212,7 @@ def upsert(items: list[dict], mark_stale: bool = True) -> int:
                         funding_max=item.get("funding_max"),
                         sector_tags=item.get("sector_tags"),
                         niche_tags=item.get("niche_tags"),
+                        geographic_scope=geographic_scope,
                         summary=item.get("summary"),
                         description=item["description"],
                         status=status,

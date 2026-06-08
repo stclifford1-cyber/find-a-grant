@@ -9,8 +9,10 @@ from typing import Optional
 import requests
 from bs4 import BeautifulSoup
 
-from .database import SessionLocal
+from .database import SessionLocal, engine
+from .geography import classify_geographic_scope
 from .models import Opportunity
+from .schema import ensure_database_schema
 
 BASE = "https://apply-for-innovation-funding.service.gov.uk"
 SEARCH = f"{BASE}/competition/search"
@@ -104,6 +106,7 @@ def ingest_page(html: str) -> list[dict]:
 
 
 def upsert(items: list[dict]) -> int:
+    ensure_database_schema(engine)
     db = SessionLocal()
     # Remove Innovate UK competitions that have already closed.
     today = date.today()
@@ -124,6 +127,7 @@ def upsert(items: list[dict]) -> int:
             if status == "expired":
                 continue
 
+            geographic_scope = item.get("geographic_scope") or classify_geographic_scope(item)
             existing = db.query(Opportunity).filter(Opportunity.id == item["id"]).one_or_none()
             if existing:
                 was_unenriched = (existing.description or "") == (existing.summary or "")
@@ -135,6 +139,7 @@ def upsert(items: list[dict]) -> int:
                     existing.description = item["description"]
                 existing.opened_date = item["opened_date"]
                 existing.closes_date = item["closes_date"]
+                existing.geographic_scope = geographic_scope
                 existing.status = status
                 existing.last_seen = now
                 changed += 1
@@ -151,6 +156,7 @@ def upsert(items: list[dict]) -> int:
                         funding_max=None,
                         sector_tags=None,
                         niche_tags=None,
+                        geographic_scope=geographic_scope,
                         summary=item.get("summary"),
                         description=item["description"],
                         status=status,

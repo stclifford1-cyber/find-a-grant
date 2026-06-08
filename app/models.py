@@ -28,6 +28,7 @@ class Opportunity(Base):
     exchange_rate_date = Column(Date, nullable=True)
     sector_tags = Column(String, nullable=True)
     niche_tags = Column(String, nullable=True)
+    geographic_scope = Column(String, nullable=True)
     summary = Column(Text, nullable=True)
     description = Column(Text, nullable=False)
     status = Column(String, nullable=False, index=True)

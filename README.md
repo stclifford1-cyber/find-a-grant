@@ -30,6 +30,7 @@ All current sources have repeatable ingestion pipelines and are included in the 
 - Closing soon badge for opportunities closing within 14 days.
 - Inline `Read more` / `Read less` details panels.
 - Currency support for Horizon Europe native EUR amounts and approximate GBP values.
+- Structured `geographic_scope` applicant-location eligibility values for downstream filtering.
 - Daily ingest script, macOS LaunchAgent helper, and GitHub Actions workflow.
 - Production-ready `DATABASE_URL` support for Neon Postgres.
 - Protected cloud ingest endpoint using `CRON_SECRET`.
@@ -149,6 +150,48 @@ python -m app.ingest_all
 ```
 
 or the protected Vercel ingest endpoint. Do not run `seed.py` against Neon or any production database. `seed.py` contains illustrative local-development fixtures, not real funding opportunities, and refuses to run unless the configured database is SQLite.
+
+## Geographic Scope
+
+Each opportunity stores a nullable `geographic_scope` value for applicant-location eligibility. The field is populated conservatively during ingest and defaults to `uk_wide` unless the scraped funder, title, or eligibility text clearly restricts applicants to a nation or English region.
+
+Allowed values are lowercase snake case:
+
+```text
+uk_wide
+scotland
+wales
+northern_ireland
+england
+england_north_east
+england_north_west
+england_yorkshire
+england_east_midlands
+england_west_midlands
+england_east
+england_london
+england_south_east
+england_south_west
+unknown
+```
+
+Schemes that genuinely cover several English regions store a comma-separated list, for example:
+
+```text
+england_east_midlands,england_west_midlands
+```
+
+Horizon Europe calls are stored as `uk_wide`; this field describes UK applicant location eligibility, not consortium composition rules.
+
+Production rollout order:
+
+```bash
+export DATABASE_URL="postgresql://..."
+python -m scripts.migrate
+python -m scripts.backfill_geographic_scope
+```
+
+`scripts.migrate` is additive and idempotent. It only ensures the nullable `geographic_scope` column exists and reports whether the column is present, total rows, and rows where `geographic_scope IS NOT NULL`. The backfill is also safe to re-run; it only sets `geographic_scope` from the deterministic classifier.
 
 ## Vercel Deployment
 
