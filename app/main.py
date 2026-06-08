@@ -14,7 +14,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from . import ingest_all
+from . import ingest_all, ingest_innovateuk
 from .database import SessionLocal, engine
 from .models import AppMetadata, Opportunity
 from .schema import ensure_database_schema
@@ -466,3 +466,65 @@ def run_cloud_ingest(request: Request):
         "elapsed_seconds": round(elapsed, 1),
         "results": results,
     }
+
+
+@app.get("/api/test-enrichment")
+def test_enrichment(request: Request, db: Session = Depends(get_db)):
+    require_cron_secret(request)
+
+    row = (
+        db.query(Opportunity)
+        .filter(
+            Opportunity.source.in_(["innovate_uk", "Innovate UK"]),
+            Opportunity.description == Opportunity.summary,
+        )
+        .order_by(Opportunity.title)
+        .first()
+    )
+
+    if not row:
+        return {
+            "competition_id": None,
+            "title": None,
+            "detail_url": None,
+            "success": False,
+            "description_length": 0,
+            "funding_min": None,
+            "funding_max": None,
+            "error": "No unenriched Innovate UK records found.",
+        }
+
+    url = ingest_innovateuk.detail_url(row.id)
+    response = {
+        "competition_id": row.id,
+        "title": row.title,
+        "detail_url": url,
+        "success": False,
+        "description_length": 0,
+        "funding_min": None,
+        "funding_max": None,
+        "error": None,
+    }
+
+    if not url:
+        response["error"] = f"Cannot build detail URL for record id {row.id!r}."
+        return response
+
+    try:
+        detail = ingest_innovateuk.parse_detail_page(
+            ingest_innovateuk.fetch_detail_page(row.id),
+            source_url=url,
+        )
+        description = detail.get("description") or ""
+        response.update(
+            {
+                "success": True,
+                "description_length": len(description),
+                "funding_min": detail.get("funding_min"),
+                "funding_max": detail.get("funding_max"),
+            }
+        )
+    except Exception as exc:
+        response["error"] = str(exc)
+
+    return response
