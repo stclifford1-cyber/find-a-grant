@@ -1,0 +1,25 @@
+name: One-off Innovate UK enrichment backfill
+
+on:
+  workflow_dispatch:
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Innovate UK enrichment backfill
+        run: python -m scripts.enrich_innovateuk_backfill
