@@ -383,7 +383,6 @@ def run(max_pages: int = 20, deadline: float | None = None) -> int:
         if not items:
             break
         total_changed += upsert(items)
-    enrich_new_records(deadline=deadline)
     return total_changed
 
 
