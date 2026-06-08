@@ -15,9 +15,9 @@ from .schema import ensure_database_schema
 
 
 SOURCE_PRIORITY = {
-    "innovate_uk": 0,
-    "Innovate UK": 0,
-    "iuk_business_connect": 1,
+    "iuk_business_connect": 0,
+    "innovate_uk": 1,
+    "Innovate UK": 1,
     "ukri": 1,
     "horizon_europe": 0,
     "konfer": 2,

@@ -29,7 +29,7 @@ def _opportunity(
     )
 
 
-def test_duplicate_pass_keeps_direct_innovate_uk_over_business_connect_and_konfer(monkeypatch) -> None:
+def test_duplicate_pass_keeps_business_connect_over_direct_innovate_uk_and_konfer(monkeypatch) -> None:
     engine = create_engine("sqlite:///:memory:")
     Base.metadata.create_all(bind=engine)
     local_session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -71,8 +71,8 @@ def test_duplicate_pass_keeps_direct_innovate_uk_over_business_connect_and_konfe
         direct = db.query(Opportunity).filter(Opportunity.id == "ifs:2473").one()
         business_connect = db.query(Opportunity).filter(Opportunity.source == "iuk_business_connect").one()
         konfer = db.query(Opportunity).filter(Opportunity.source == "konfer").one()
-        assert direct.status == "open"
-        assert business_connect.status == "inactive"
+        assert direct.status == "inactive"
+        assert business_connect.status == "open"
         assert konfer.status == "inactive"
     finally:
         db.close()
