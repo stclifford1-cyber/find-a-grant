@@ -16,7 +16,7 @@ KONFER_RECORD = {
     "summary": "<p>Funding to develop feasibility studies and prototypes.</p>",
     "url": "/funding/detail/abc123",
     "registrationStartDate": "May 1st 2026",
-    "registrationCloseDate": "Jun 6th 2026",
+    "registrationCloseDate": "Jun 16th 2026",
     "fundingUrl": "https://example.com/apply",
     "organisation": "Department for Transport",
     "sector": "Transport",
@@ -32,7 +32,7 @@ def test_normalise_konfer_record() -> None:
     assert item["url"] == "https://example.com/apply"
     assert item["summary"] == "Funding to develop feasibility studies and prototypes."
     assert item["opened_date"] == date(2026, 5, 1)
-    assert item["closes_date"] == date(2026, 6, 6)
+    assert item["closes_date"] == date(2026, 6, 16)
     assert item["funding_max"] == 2_000_000
     assert item["sector_tags"] == "Transport"
     assert item["niche_tags"] == "Department for Transport, Grant Funding"

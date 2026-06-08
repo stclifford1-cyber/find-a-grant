@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import re
 import time
 from datetime import date, datetime, timezone
@@ -222,11 +223,17 @@ def _run_step(
     _check_deadline(deadline, f"continuing after {name}", min_remaining_seconds)
 
 
+def _run_innovate_uk(deadline: float | None) -> int:
+    if "deadline" in inspect.signature(ingest_innovateuk.run).parameters:
+        return ingest_innovateuk.run(deadline=deadline)
+    return ingest_innovateuk.run()
+
+
 def run(deadline: float | None = None, min_remaining_seconds: float = DEFAULT_MIN_REMAINING_SECONDS) -> dict[str, int]:
     ensure_database_schema(engine)
     results: dict[str, int] = {}
     _run_step(results, "expired_marked_inactive_before", mark_expired_inactive, deadline, min_remaining_seconds)
-    _run_step(results, "innovate_uk", ingest_innovateuk.run, deadline, min_remaining_seconds)
+    _run_step(results, "innovate_uk", lambda: _run_innovate_uk(deadline), deadline, min_remaining_seconds)
     _run_step(results, "iuk_business_connect", ingest_iuk_business_connect.run, deadline, min_remaining_seconds)
     _run_step(results, "ukri", ingest_ukri.run, deadline, min_remaining_seconds)
     _run_step(results, "horizon_europe", ingest_horizon_europe.run, deadline, min_remaining_seconds)
