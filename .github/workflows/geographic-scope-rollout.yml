@@ -1,4 +1,4 @@
-name: Geographic scope rollout
+name: Structured eligibility rollout
 
 on:
   workflow_dispatch:
@@ -34,5 +34,8 @@ jobs:
       - name: Backfill geographic scope
         run: python -m scripts.backfill_geographic_scope
 
-      - name: Verify geographic scope after backfill
+      - name: Backfill eligible applicants
+        run: python -m scripts.backfill_eligible_applicants
+
+      - name: Verify schema after backfill
         run: python -m scripts.migrate

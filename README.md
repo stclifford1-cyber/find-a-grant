@@ -30,7 +30,7 @@ All current sources have repeatable ingestion pipelines and are included in the 
 - Closing soon badge for opportunities closing within 14 days.
 - Inline `Read more` / `Read less` details panels.
 - Currency support for Horizon Europe native EUR amounts and approximate GBP values.
-- Structured `geographic_scope` applicant-location eligibility values for downstream filtering.
+- Structured `geographic_scope` and `eligible_applicants` eligibility values for downstream filtering.
 - Daily ingest script, macOS LaunchAgent helper, and GitHub Actions workflow.
 - Production-ready `DATABASE_URL` support for Neon Postgres.
 - Protected cloud ingest endpoint using `CRON_SECRET`.
@@ -151,7 +151,7 @@ python -m app.ingest_all
 
 or the protected Vercel ingest endpoint. Do not run `seed.py` against Neon or any production database. `seed.py` contains illustrative local-development fixtures, not real funding opportunities, and refuses to run unless the configured database is SQLite.
 
-## Geographic Scope
+## Structured Eligibility
 
 Each opportunity stores a nullable `geographic_scope` value for applicant-location eligibility. The field is populated conservatively during ingest and defaults to `uk_wide` unless the scraped funder, title, or eligibility text clearly restricts applicants to a nation or English region.
 
@@ -183,15 +183,36 @@ england_east_midlands,england_west_midlands
 
 Horizon Europe calls are stored as `uk_wide`; this field describes UK applicant location eligibility, not consortium composition rules.
 
+Each opportunity also stores a nullable `eligible_applicants` value for applicant-type eligibility. Values are a comma-separated set drawn from:
+
+```text
+business
+academic
+research_org
+public_sector
+charity
+individual
+any
+```
+
+Use multiple values where a scheme clearly requires a partnership, for example:
+
+```text
+business,academic
+```
+
+The applicant classifier is conservative and defaults to `any` unless the scraped funder, title, or eligibility text clearly restricts who may apply. Horizon Europe and other broad consortium programmes are stored as `any`.
+
 Production rollout order:
 
 ```bash
 export DATABASE_URL="postgresql://..."
-python -m scripts.migrate
-python -m scripts.backfill_geographic_scope
+python -m scripts.migrate                         # adds nullable columns, idempotent
+python -m scripts.backfill_geographic_scope       # fills existing geographic_scope rows
+python -m scripts.backfill_eligible_applicants    # fills existing eligible_applicants rows
 ```
 
-`scripts.migrate` is additive and idempotent. It only ensures the nullable `geographic_scope` column exists and reports whether the column is present, total rows, and rows where `geographic_scope IS NOT NULL`. The backfill is also safe to re-run; it only sets `geographic_scope` from the deterministic classifier.
+`scripts.migrate` is additive and idempotent. It only ensures the nullable structured eligibility columns exist and reports whether each column is present, total rows, and rows where each field is not null. The backfills are also safe to re-run; each script only sets its own structured eligibility column from a deterministic classifier.
 
 ## Vercel Deployment
 

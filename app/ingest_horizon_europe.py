@@ -12,6 +12,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from .database import SessionLocal, engine
+from .eligibility import ANY
 from .geography import UK_WIDE
 from .models import Opportunity
 from .schema import ensure_database_schema
@@ -260,6 +261,7 @@ def normalise_result(result: dict, eur_to_gbp: Optional[float], rate_date: Optio
         "sector_tags": ", ".join(keywords[:8]) if keywords else None,
         "niche_tags": ", ".join(value for value in [action_type, call_title] if value) or None,
         "geographic_scope": UK_WIDE,
+        "eligible_applicants": ANY,
         "summary": summary,
         "description": "\n\n".join(part for part in description_parts if part) or summary,
     }
@@ -349,6 +351,7 @@ def upsert(items: list[dict], mark_stale: bool = True) -> int:
                 existing.sector_tags = item.get("sector_tags")
                 existing.niche_tags = item.get("niche_tags")
                 existing.geographic_scope = item.get("geographic_scope") or UK_WIDE
+                existing.eligible_applicants = item.get("eligible_applicants") or ANY
                 existing.summary = item.get("summary")
                 existing.description = item["description"]
                 existing.status = status
@@ -372,6 +375,7 @@ def upsert(items: list[dict], mark_stale: bool = True) -> int:
                         sector_tags=item.get("sector_tags"),
                         niche_tags=item.get("niche_tags"),
                         geographic_scope=item.get("geographic_scope") or UK_WIDE,
+                        eligible_applicants=item.get("eligible_applicants") or ANY,
                         summary=item.get("summary"),
                         description=item["description"],
                         status=status,

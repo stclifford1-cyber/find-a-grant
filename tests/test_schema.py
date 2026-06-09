@@ -14,6 +14,7 @@ def test_ensure_database_schema_creates_required_tables_on_fresh_database() -> N
     assert AppMetadata.__tablename__ in tables
     columns = {column["name"] for column in inspect(engine).get_columns(Opportunity.__tablename__)}
     assert "geographic_scope" in columns
+    assert "eligible_applicants" in columns
 
 
 def test_migrate_geographic_scope_is_idempotent() -> None:
@@ -40,9 +41,12 @@ def test_migrate_geographic_scope_is_idempotent() -> None:
 
     columns = {column["name"] for column in inspect(engine).get_columns(Opportunity.__tablename__)}
     assert "geographic_scope" in columns
+    assert "eligible_applicants" in columns
     assert first == {
         "geographic_scope_present": True,
+        "eligible_applicants_present": True,
         "total_rows": 0,
         "geographic_scope_populated_rows": 0,
+        "eligible_applicants_populated_rows": 0,
     }
     assert second == first

@@ -9,6 +9,7 @@ import requests
 from bs4 import BeautifulSoup, Tag
 
 from .database import SessionLocal, engine
+from .eligibility import classify_eligible_applicants
 from .geography import classify_geographic_scope
 from .models import Opportunity
 from .schema import ensure_database_schema
@@ -229,6 +230,7 @@ def upsert(items: list[dict], mark_stale: bool = True) -> int:
                 continue
 
             geographic_scope = item.get("geographic_scope") or classify_geographic_scope(item)
+            eligible_applicants = item.get("eligible_applicants") or classify_eligible_applicants(item)
             seen_ids.add(item["id"])
             existing = db.query(Opportunity).filter(Opportunity.id == item["id"]).one_or_none()
             if existing:
@@ -242,6 +244,7 @@ def upsert(items: list[dict], mark_stale: bool = True) -> int:
                 existing.sector_tags = item.get("sector_tags")
                 existing.niche_tags = item.get("niche_tags")
                 existing.geographic_scope = geographic_scope
+                existing.eligible_applicants = eligible_applicants
                 existing.summary = item.get("summary")
                 existing.description = item["description"]
                 existing.status = status
@@ -260,6 +263,7 @@ def upsert(items: list[dict], mark_stale: bool = True) -> int:
                         sector_tags=item.get("sector_tags"),
                         niche_tags=item.get("niche_tags"),
                         geographic_scope=geographic_scope,
+                        eligible_applicants=eligible_applicants,
                         summary=item.get("summary"),
                         description=item["description"],
                         status=status,
