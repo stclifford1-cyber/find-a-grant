@@ -127,7 +127,7 @@ def test_homepage_renders_last_successful_ingest_timestamp(monkeypatch) -> None:
 
     assert response.status_code == 200
     assert "Last updated: 2 June 2026, 06:04 UTC" in response.text
-    assert "Successful loading" in response.text
+    assert "Loaded successfully" in response.text
 
 
 def test_homepage_renders_partial_ingest_status(monkeypatch) -> None:
@@ -167,7 +167,7 @@ def test_homepage_renders_partial_ingest_status(monkeypatch) -> None:
         main.app.dependency_overrides.clear()
 
     assert response.status_code == 200
-    assert "Partial successful loading" in response.text
+    assert "Partially loaded" in response.text
     assert "Horizon Europe:" in response.text
     assert "Last successful: 8 June 2026, 06:20 UTC" in response.text
 

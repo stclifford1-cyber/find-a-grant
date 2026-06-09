@@ -248,8 +248,8 @@ def get_ingest_status(db: Session) -> dict:
             run_status = "unknown"
 
     status_text = {
-        "success": "Successful loading",
-        "partial_success": "Partial successful loading",
+        "success": "Loaded successfully",
+        "partial_success": "Partially loaded",
         "failed": "Daily run failed",
         "unknown": "Ingest status unknown",
     }[run_status]
