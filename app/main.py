@@ -80,7 +80,16 @@ CORE_SOURCE_FILTERS = ("innovate_uk", "ukri", "horizon_europe", "konfer")
 DEFAULT_INGEST_TIMEOUT_SECONDS = 300.0
 INGEST_TIMEOUT_ENV = "INGEST_TIMEOUT_SECONDS"
 LAST_SUCCESSFUL_INGEST_KEY = "last_successful_ingest_at"
+LAST_INGEST_RUN_KEY = "last_ingest_run"
+SOURCE_STATUS_PREFIX = "source_status:"
 LAST_KONFER_CHECK_KEY = "source_check:konfer"
+INGEST_STATUS_SOURCES = (
+    ("innovate_uk", "Innovate UK"),
+    ("iuk_business_connect", "IUK Business Connect"),
+    ("ukri", "UKRI"),
+    ("horizon_europe", "Horizon Europe"),
+    ("konfer", "Konfer"),
+)
 
 
 def source_key(value: str) -> str:
@@ -173,6 +182,92 @@ def get_konfer_check_status(db: Session) -> Optional[str]:
     if count == 0:
         return "Konfer checked successfully: no unique opportunities found."
     return None
+
+
+def _parse_metadata_datetime(value: object) -> Optional[datetime]:
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+def _load_json_metadata(db: Session, key: str) -> dict:
+    row = db.query(AppMetadata).filter(AppMetadata.key == key).one_or_none()
+    if not row:
+        return {}
+    try:
+        value = json.loads(row.value)
+    except json.JSONDecodeError:
+        logger.warning("Invalid JSON metadata for %s: %r", key, row.value)
+        return {}
+    return value if isinstance(value, dict) else {}
+
+
+def get_ingest_status(db: Session) -> dict:
+    run_data = _load_json_metadata(db, LAST_INGEST_RUN_KEY)
+    legacy_last_success = get_last_successful_ingest(db)
+    source_rows = []
+    failed = 0
+    succeeded = 0
+
+    for source, label in INGEST_STATUS_SOURCES:
+        data = _load_json_metadata(db, f"{SOURCE_STATUS_PREFIX}{source}")
+        status = data.get("status") if isinstance(data.get("status"), str) else "unknown"
+        if status == "success":
+            succeeded += 1
+        elif status == "failed":
+            failed += 1
+
+        source_rows.append(
+            {
+                "source": source,
+                "label": label,
+                "status": status,
+                "count": data.get("count"),
+                "checked_at": format_ingest_timestamp(_parse_metadata_datetime(data.get("checked_at"))),
+                "last_successful_at": format_ingest_timestamp(
+                    _parse_metadata_datetime(data.get("last_successful_at"))
+                ),
+                "error": data.get("error") if isinstance(data.get("error"), str) else None,
+            }
+        )
+
+    run_status = run_data.get("status") if isinstance(run_data.get("status"), str) else None
+    if run_status not in {"success", "partial_success", "failed"}:
+        if failed and succeeded:
+            run_status = "partial_success"
+        elif failed:
+            run_status = "failed"
+        elif succeeded:
+            run_status = "success"
+        elif legacy_last_success:
+            run_status = "success"
+        else:
+            run_status = "unknown"
+
+    status_text = {
+        "success": "Successful loading",
+        "partial_success": "Partial successful loading",
+        "failed": "Daily run failed",
+        "unknown": "Ingest status unknown",
+    }[run_status]
+
+    status_class = {
+        "success": "border-green-700 bg-green-100 text-green-900",
+        "partial_success": "border-amber-700 bg-amber-100 text-amber-950",
+        "failed": "border-red-700 bg-red-100 text-red-900",
+        "unknown": "border-gray-500 bg-white/70 text-gray-900",
+    }[run_status]
+
+    return {
+        "status": run_status,
+        "label": status_text,
+        "class": status_class,
+        "checked_at": format_ingest_timestamp(_parse_metadata_datetime(run_data.get("checked_at")) or legacy_last_success),
+        "sources": source_rows,
+    }
 
 
 def require_cron_secret(request: Request) -> None:
@@ -348,6 +443,7 @@ def index(
             "grouped": grouped,
             "sources": get_sources(db),
             "last_successful_ingest": format_ingest_timestamp(get_last_successful_ingest(db)),
+            "ingest_status": get_ingest_status(db),
             "konfer_check_status": get_konfer_check_status(db),
             "filters": {
                 "keyword": keyword or "",

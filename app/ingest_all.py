@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import inspect
+import json
+import logging
 import re
 import time
 from datetime import date, datetime, timezone
+from typing import Any, Callable
 from urllib.parse import urlparse
 
 from sqlalchemy import or_
@@ -26,6 +29,16 @@ SOURCE_PRIORITY = {
 
 DEFAULT_MIN_REMAINING_SECONDS = 30.0
 LAST_SUCCESSFUL_INGEST_KEY = "last_successful_ingest_at"
+LAST_INGEST_RUN_KEY = "last_ingest_run"
+SOURCE_STATUS_PREFIX = "source_status:"
+SOURCE_INGEST_STEPS = (
+    "innovate_uk",
+    "iuk_business_connect",
+    "ukri",
+    "horizon_europe",
+    "konfer",
+)
+logger = logging.getLogger(__name__)
 
 
 class IngestDeadlineExceeded(RuntimeError):
@@ -201,6 +214,84 @@ def record_successful_ingest(timestamp: datetime | None = None) -> None:
         db.close()
 
 
+def _metadata_upsert(db, key: str, value: str) -> None:
+    row = db.query(AppMetadata).filter(AppMetadata.key == key).one_or_none()
+    if row:
+        row.value = value
+    else:
+        db.add(AppMetadata(key=key, value=value))
+
+
+def _load_json_metadata(db, key: str) -> dict[str, Any]:
+    row = db.query(AppMetadata).filter(AppMetadata.key == key).one_or_none()
+    if not row:
+        return {}
+    try:
+        value = json.loads(row.value)
+    except json.JSONDecodeError:
+        logger.warning("Invalid JSON metadata for %s: %r", key, row.value)
+        return {}
+    return value if isinstance(value, dict) else {}
+
+
+def record_source_ingest_status(
+    source: str,
+    status: str,
+    *,
+    count: int | None = None,
+    error: str | None = None,
+    timestamp: datetime | None = None,
+) -> None:
+    checked_at = (timestamp or datetime.now(timezone.utc)).astimezone(timezone.utc).isoformat()
+    key = f"{SOURCE_STATUS_PREFIX}{source}"
+    db = SessionLocal()
+    try:
+        previous = _load_json_metadata(db, key)
+        data: dict[str, Any] = {
+            "source": source,
+            "status": status,
+            "checked_at": checked_at,
+            "last_successful_at": previous.get("last_successful_at"),
+        }
+        if count is not None:
+            data["count"] = count
+        if error:
+            data["error"] = error
+        if status == "success":
+            data["last_successful_at"] = checked_at
+        _metadata_upsert(db, key, json.dumps(data, sort_keys=True))
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
+
+
+def record_ingest_run_status(status: str, results: dict[str, Any], timestamp: datetime | None = None) -> None:
+    checked_at = (timestamp or datetime.now(timezone.utc)).astimezone(timezone.utc).isoformat()
+    db = SessionLocal()
+    try:
+        _metadata_upsert(
+            db,
+            LAST_INGEST_RUN_KEY,
+            json.dumps(
+                {
+                    "status": status,
+                    "checked_at": checked_at,
+                    "results": results,
+                },
+                sort_keys=True,
+            ),
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
+
+
 def _check_deadline(deadline: float | None, label: str, min_remaining_seconds: float) -> None:
     if deadline is None:
         return
@@ -212,7 +303,7 @@ def _check_deadline(deadline: float | None, label: str, min_remaining_seconds: f
 
 
 def _run_step(
-    results: dict[str, int],
+    results: dict[str, Any],
     name: str,
     action,
     deadline: float | None,
@@ -223,25 +314,52 @@ def _run_step(
     _check_deadline(deadline, f"continuing after {name}", min_remaining_seconds)
 
 
+def _run_source_step(
+    results: dict[str, Any],
+    failures: dict[str, str],
+    name: str,
+    action: Callable[[], int],
+    deadline: float | None,
+    min_remaining_seconds: float,
+) -> None:
+    try:
+        _run_step(results, name, action, deadline, min_remaining_seconds)
+    except Exception as exc:
+        message = str(exc) or exc.__class__.__name__
+        failures[name] = message
+        results[name] = {"status": "failed", "error": message}
+        logger.exception("Ingest source %s failed; continuing with remaining sources.", name)
+        record_source_ingest_status(name, "failed", error=message)
+    else:
+        record_source_ingest_status(name, "success", count=results[name])
+
+
 def _run_innovate_uk(deadline: float | None) -> int:
     if "deadline" in inspect.signature(ingest_innovateuk.run).parameters:
         return ingest_innovateuk.run(deadline=deadline)
     return ingest_innovateuk.run()
 
 
-def run(deadline: float | None = None, min_remaining_seconds: float = DEFAULT_MIN_REMAINING_SECONDS) -> dict[str, int]:
+def run(deadline: float | None = None, min_remaining_seconds: float = DEFAULT_MIN_REMAINING_SECONDS) -> dict[str, Any]:
     ensure_database_schema(engine)
-    results: dict[str, int] = {}
+    results: dict[str, Any] = {}
+    failures: dict[str, str] = {}
     _run_step(results, "expired_marked_inactive_before", mark_expired_inactive, deadline, min_remaining_seconds)
-    _run_step(results, "innovate_uk", lambda: _run_innovate_uk(deadline), deadline, min_remaining_seconds)
-    _run_step(results, "iuk_business_connect", ingest_iuk_business_connect.run, deadline, min_remaining_seconds)
-    _run_step(results, "ukri", ingest_ukri.run, deadline, min_remaining_seconds)
-    _run_step(results, "horizon_europe", ingest_horizon_europe.run, deadline, min_remaining_seconds)
-    _run_step(results, "konfer", ingest_konfer.run, deadline, min_remaining_seconds)
+    _run_source_step(results, failures, "innovate_uk", lambda: _run_innovate_uk(deadline), deadline, min_remaining_seconds)
+    _run_source_step(results, failures, "iuk_business_connect", ingest_iuk_business_connect.run, deadline, min_remaining_seconds)
+    _run_source_step(results, failures, "ukri", ingest_ukri.run, deadline, min_remaining_seconds)
+    _run_source_step(results, failures, "horizon_europe", ingest_horizon_europe.run, deadline, min_remaining_seconds)
+    _run_source_step(results, failures, "konfer", ingest_konfer.run, deadline, min_remaining_seconds)
     _run_step(results, "duplicates_marked_inactive", mark_duplicates_inactive, deadline, min_remaining_seconds)
     _run_step(results, "expired_marked_inactive_after", mark_expired_inactive, deadline, min_remaining_seconds)
-    _check_deadline(deadline, "recording successful ingest timestamp", min_remaining_seconds)
-    record_successful_ingest()
+    overall_status = "failed" if len(failures) == len(SOURCE_INGEST_STEPS) else "partial_success" if failures else "success"
+    results["overall_status"] = overall_status
+    if failures:
+        results["source_failures"] = failures
+    _check_deadline(deadline, "recording ingest status", min_remaining_seconds)
+    record_ingest_run_status(overall_status, results)
+    if overall_status == "success":
+        record_successful_ingest()
     return results
 
 
