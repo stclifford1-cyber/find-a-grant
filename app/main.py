@@ -14,16 +14,58 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from . import ingest_all, ingest_innovateuk
+from . import ingest_all
 from .database import SessionLocal, engine
 from .models import AppMetadata, Opportunity
 from .schema import ensure_database_schema
 
-app = FastAPI(title="Find a Grant")
+
+def _is_production() -> bool:
+    return os.environ.get("VERCEL_ENV") == "production" or os.environ.get("ENVIRONMENT") == "production"
+
+
+app = FastAPI(
+    title="Find a Grant",
+    docs_url=None if _is_production() else "/docs",
+    redoc_url=None if _is_production() else "/redoc",
+    openapi_url=None if _is_production() else "/openapi.json",
+)
 templates = Jinja2Templates(directory="app/templates")
 logger = logging.getLogger(__name__)
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+def _security_headers() -> dict[str, str]:
+    content_security_policy = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data:; "
+        "connect-src 'self'; "
+        "object-src 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'; "
+        "frame-ancestors 'none'"
+    )
+    headers = {
+        "Content-Security-Policy": content_security_policy,
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+        "X-Frame-Options": "DENY",
+    }
+    if _is_production():
+        headers["Content-Security-Policy"] = f"{content_security_policy}; upgrade-insecure-requests"
+        headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return headers
+
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    for name, value in _security_headers().items():
+        response.headers.setdefault(name, value)
+    return response
 
 
 def format_uk_date(value: Optional[date]) -> str:
@@ -523,7 +565,7 @@ def opportunity_details(
     )
 
 
-@app.get("/api/ingest")
+@app.post("/api/ingest")
 def run_cloud_ingest(request: Request):
     require_cron_secret(request)
 
@@ -562,65 +604,3 @@ def run_cloud_ingest(request: Request):
         "elapsed_seconds": round(elapsed, 1),
         "results": results,
     }
-
-
-@app.get("/api/test-enrichment")
-def test_enrichment(request: Request, db: Session = Depends(get_db)):
-    require_cron_secret(request)
-
-    row = (
-        db.query(Opportunity)
-        .filter(
-            Opportunity.source.in_(["innovate_uk", "Innovate UK"]),
-            Opportunity.description == Opportunity.summary,
-        )
-        .order_by(Opportunity.title)
-        .first()
-    )
-
-    if not row:
-        return {
-            "competition_id": None,
-            "title": None,
-            "detail_url": None,
-            "success": False,
-            "description_length": 0,
-            "funding_min": None,
-            "funding_max": None,
-            "error": "No unenriched Innovate UK records found.",
-        }
-
-    url = ingest_innovateuk.detail_url(row.id)
-    response = {
-        "competition_id": row.id,
-        "title": row.title,
-        "detail_url": url,
-        "success": False,
-        "description_length": 0,
-        "funding_min": None,
-        "funding_max": None,
-        "error": None,
-    }
-
-    if not url:
-        response["error"] = f"Cannot build detail URL for record id {row.id!r}."
-        return response
-
-    try:
-        detail = ingest_innovateuk.parse_detail_page(
-            ingest_innovateuk.fetch_detail_page(row.id),
-            source_url=url,
-        )
-        description = detail.get("description") or ""
-        response.update(
-            {
-                "success": True,
-                "description_length": len(description),
-                "funding_min": detail.get("funding_min"),
-                "funding_max": detail.get("funding_max"),
-            }
-        )
-    except Exception as exc:
-        response["error"] = str(exc)
-
-    return response

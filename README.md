@@ -34,6 +34,7 @@ All current sources have repeatable ingestion pipelines and are included in the 
 - Daily ingest script, macOS LaunchAgent helper, and GitHub Actions workflow.
 - Production-ready `DATABASE_URL` support for Neon Postgres.
 - Protected cloud ingest endpoint using `CRON_SECRET`.
+- Security headers, production-disabled API docs, Dependabot, and CodeQL scanning.
 - Top-of-page source health status showing the last successful ingest and relevant zero-result source checks.
 
 ## Project Structure
@@ -221,7 +222,7 @@ The repository includes:
 - `.python-version` pinned to Python 3.14.
 - `api/index.py` as the Vercel FastAPI entrypoint.
 - `vercel.json` with Hobby-safe routing for the FastAPI app.
-- `/api/ingest`, protected by `CRON_SECRET`.
+- `POST /api/ingest`, protected by `CRON_SECRET`.
 
 Required Vercel environment variables:
 
@@ -236,6 +237,15 @@ Anonymous requests, incorrect bearer tokens, and unset `CRON_SECRET` are rejecte
 The ingest endpoint uses a 300 second application budget by default. The ingest runner keeps a 30 second safety margin before each stage, so slow runs fail with a non-200 response and logs instead of reporting a successful run too close to the configured timeout.
 
 On Vercel Hobby, the protected endpoint is for manual/admin use only. The full scheduled ingest does not run on Vercel because the five-source scrape takes several minutes and exceeds Hobby function limits.
+
+Production responses include standard browser security headers, including a Content Security Policy, clickjacking protection, `nosniff`, referrer policy, permissions policy, and HSTS. FastAPI's interactive API docs are available during local development but disabled when `VERCEL_ENV=production` or `ENVIRONMENT=production`.
+
+Dependency and code scanning are configured through:
+
+```text
+.github/dependabot.yml
+.github/workflows/codeql.yml
+```
 
 ## GitHub Actions Daily Ingest
 
@@ -260,7 +270,7 @@ DATABASE_URL
 CRON_SECRET
 ```
 
-`DATABASE_URL` is required by the scheduled ingest. `CRON_SECRET` protects the manual `/api/ingest` endpoint and is included in the workflow environment for consistency, though the scheduled workflow writes to Neon directly rather than calling that endpoint.
+`DATABASE_URL` is required by the scheduled ingest. `CRON_SECRET` protects the manual `POST /api/ingest` endpoint and is included in the workflow environment for consistency, though the scheduled workflow writes to Neon directly rather than calling that endpoint.
 
 The top of the page renders the database freshness signal:
 
@@ -283,6 +293,7 @@ Target public deployment:
 - Vercel-hosted FastAPI app
 - Neon Postgres database
 - Secured manual ingest endpoint
+- Security headers and automated dependency/code scanning
 - GitHub Actions daily refresh
 
 The next deployment phase should:
