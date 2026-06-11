@@ -11,6 +11,7 @@ def test_responses_include_security_headers() -> None:
     assert response.headers["x-frame-options"] == "DENY"
     assert response.headers["referrer-policy"] == "strict-origin-when-cross-origin"
     assert "frame-ancestors 'none'" in response.headers["content-security-policy"]
+    assert "frame-src https://grant-rag-chatbot.onrender.com" in response.headers["content-security-policy"]
 
 
 def test_cron_ingest_rejects_anonymous_request(monkeypatch) -> None:
