@@ -43,6 +43,7 @@ def _security_headers() -> dict[str, str]:
         "img-src 'self' data:; "
         "connect-src 'self'; "
         "object-src 'none'; "
+        "frame-src https://grant-rag-chatbot.onrender.com; "  # allow the embedded AI advisor widget
         "base-uri 'self'; "
         "form-action 'self'; "
         "frame-ancestors 'none'"

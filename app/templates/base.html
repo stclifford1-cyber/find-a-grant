@@ -16,5 +16,76 @@
   <div class="mx-auto max-w-[1200px] px-4 py-8 lg:px-8 lg:py-10">
     {% block content %}{% endblock %}
   </div>
+
+  <!-- AI Funding Advisor: floating widget embedding the grant-rag-chatbot (hosted on Render). -->
+  <style>
+    #ai-advisor-btn {
+      position: fixed; right: 20px; bottom: 20px; z-index: 9998;
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #2563eb; color: #fff; border: none; cursor: pointer;
+      padding: 13px 20px; border-radius: 999px;
+      font: 600 15px "Avenir Next", Avenir, "Segoe UI", sans-serif;
+      box-shadow: 0 6px 20px rgba(37,99,235,.35); transition: background .15s, transform .15s;
+    }
+    #ai-advisor-btn:hover { background: #1d4ed8; transform: translateY(-1px); }
+    #ai-advisor-panel {
+      position: fixed; right: 20px; bottom: 86px; z-index: 9999;
+      width: 440px; height: min(720px, 85vh); display: none; flex-direction: column;
+      background: #fff; border-radius: 16px; overflow: hidden;
+      box-shadow: 0 16px 48px rgba(0,0,0,.28);
+    }
+    #ai-advisor-panel.open { display: flex; }
+    #ai-advisor-panel.expanded { width: min(900px, 92vw); height: 92vh; bottom: 20px; }
+    #ai-advisor-head {
+      flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
+      background: #2563eb; color: #fff; padding: 12px 16px;
+      font: 600 15px "Avenir Next", Avenir, "Segoe UI", sans-serif;
+    }
+    #ai-advisor-head button { background: none; border: none; color: #fff; font-size: 24px; line-height: 1; cursor: pointer; opacity: .9; }
+    #ai-advisor-expand { font-size: 18px; margin-right: 8px; vertical-align: middle; }
+    #ai-advisor-head button:hover { opacity: 1; }
+    #ai-advisor-frame { flex: 1 1 auto; width: 100%; border: none; }
+    @media (max-width: 480px) {
+      #ai-advisor-panel { right: 0; bottom: 0; width: 100vw; height: 100vh; border-radius: 0; }
+      #ai-advisor-btn { right: 14px; bottom: 14px; }
+    }
+  </style>
+  <button id="ai-advisor-btn" aria-label="Open the AI funding advisor">
+    <span aria-hidden="true">💬</span> Ask the AI advisor
+  </button>
+  <div id="ai-advisor-panel" role="dialog" aria-label="AI Funding Advisor">
+    <div id="ai-advisor-head">
+      <span>AI Funding Advisor</span>
+      <span>
+        <button id="ai-advisor-expand" aria-label="Expand">⤢</button>
+        <button id="ai-advisor-close" aria-label="Close advisor">&times;</button>
+      </span>
+    </div>
+    <iframe id="ai-advisor-frame" title="AI Funding Advisor" loading="lazy"></iframe>
+  </div>
+  <script>
+    (function () {
+      var CHATBOT_URL = "https://grant-rag-chatbot.onrender.com";
+      var btn = document.getElementById("ai-advisor-btn");
+      var panel = document.getElementById("ai-advisor-panel");
+      var frame = document.getElementById("ai-advisor-frame");
+      var loaded = false;
+      function open() {
+        if (!loaded) { frame.src = CHATBOT_URL + "?cb=" + Date.now(); loaded = true; }  // cache-bust so it's never stale
+        panel.classList.add("open"); btn.style.display = "none";
+      }
+      function close() { panel.classList.remove("open"); btn.style.display = ""; }
+      btn.addEventListener("click", open);
+      document.getElementById("ai-advisor-close").addEventListener("click", close);
+      document.getElementById("ai-advisor-expand").addEventListener("click", function () {
+        const big = panel.classList.toggle("expanded");
+        this.textContent = big ? "⤡" : "⤢";
+        this.setAttribute("aria-label", big ? "Shrink" : "Expand");
+      });
+      // Open by default on desktop so the advisor is visible and inviting; stay
+      // collapsed on phones (where it would cover the page) until tapped.
+      if (window.innerWidth > 768) { open(); }
+    })();
+  </script>
 </body>
 </html>
