@@ -255,7 +255,7 @@ The daily production refresh runs from:
 .github/workflows/daily-ingest.yml
 ```
 
-It runs at about 06:17 UTC and can also be started manually from GitHub Actions. The off-hour minute reduces the chance of GitHub Actions delaying or dropping the scheduled run during top-of-hour load. The workflow installs dependencies and runs:
+It has scheduled attempts at about 06:17, 08:17, 10:17, and 12:17 UTC, and can also be started manually from GitHub Actions. Multiple attempts reduce the impact of GitHub Actions delaying or dropping a scheduled event; the ingest is idempotent and the workflow uses concurrency so runs do not overlap. The off-hour minute reduces the chance of GitHub Actions delaying or dropping the scheduled run during top-of-hour load. The workflow installs dependencies and runs:
 
 ```bash
 python -m app.ingest_all
@@ -279,7 +279,7 @@ Last updated: 2 June 2026, 06:04 UTC
 Sources checked successfully
 ```
 
-A stale timestamp is the public health check that the scheduled ingest did not complete successfully. The page also renders relevant source notes, including when Konfer was checked successfully but returned only duplicate Business Connect records:
+A stale timestamp is the public health check that the scheduled ingest did not complete successfully. After midnight UTC, the page shows `Today's refresh pending` until a successful refresh has been recorded for the new UTC day. The page also renders relevant source notes, including when Konfer was checked successfully but returned only duplicate Business Connect records:
 
 ```text
 Konfer checked successfully: no unique opportunities found.

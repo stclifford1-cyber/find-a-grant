@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -111,6 +111,8 @@ def test_homepage_renders_last_successful_ingest_timestamp(monkeypatch) -> None:
     db.commit()
     db.close()
 
+    monkeypatch.setattr(main, "_utc_today", lambda: date(2026, 6, 2))
+
     def override_get_db():
         session = local_session()
         try:
@@ -128,6 +130,45 @@ def test_homepage_renders_last_successful_ingest_timestamp(monkeypatch) -> None:
     assert response.status_code == 200
     assert "Last updated: 2 June 2026, 06:04 UTC" in response.text
     assert "Loaded successfully" in response.text
+
+
+def test_homepage_marks_successful_refresh_pending_after_midnight_utc(monkeypatch) -> None:
+    _, local_session = _session_factory()
+    db = local_session()
+    db.add(
+        AppMetadata(
+            key=main.LAST_SUCCESSFUL_INGEST_KEY,
+            value=datetime(2026, 6, 10, 10, 43, tzinfo=timezone.utc).isoformat(),
+        )
+    )
+    db.add(
+        AppMetadata(
+            key=main.LAST_INGEST_RUN_KEY,
+            value='{"checked_at": "2026-06-10T10:43:00+00:00", "status": "success"}',
+        )
+    )
+    db.commit()
+    db.close()
+
+    def override_get_db():
+        session = local_session()
+        try:
+            yield session
+        finally:
+            session.close()
+
+    monkeypatch.setattr(main, "_utc_today", lambda: date(2026, 6, 11))
+    main.app.dependency_overrides[main.get_db] = override_get_db
+    try:
+        with TestClient(main.app) as client:
+            response = client.get("/")
+    finally:
+        main.app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert "Last updated: 10 June 2026, 10:43 UTC" in response.text
+    assert "refresh pending" in response.text
+    assert "Loaded successfully" not in response.text
 
 
 def test_homepage_renders_partial_ingest_status(monkeypatch) -> None:

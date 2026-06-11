@@ -236,6 +236,17 @@ def _parse_metadata_datetime(value: object) -> Optional[datetime]:
         return None
 
 
+def _utc_date(value: Optional[datetime]) -> Optional[date]:
+    if not value:
+        return None
+    utc_value = value.astimezone(timezone.utc) if value.tzinfo else value.replace(tzinfo=timezone.utc)
+    return utc_value.date()
+
+
+def _utc_today() -> date:
+    return datetime.now(timezone.utc).date()
+
+
 def _load_json_metadata(db: Session, key: str) -> dict:
     row = db.query(AppMetadata).filter(AppMetadata.key == key).one_or_none()
     if not row:
@@ -277,6 +288,7 @@ def get_ingest_status(db: Session) -> dict:
             }
         )
 
+    run_checked_at = _parse_metadata_datetime(run_data.get("checked_at"))
     run_status = run_data.get("status") if isinstance(run_data.get("status"), str) else None
     if run_status not in {"success", "partial_success", "failed"}:
         if failed and succeeded:
@@ -290,8 +302,13 @@ def get_ingest_status(db: Session) -> dict:
         else:
             run_status = "unknown"
 
+    last_success_date = _utc_date(legacy_last_success)
+    if run_status == "success" and (not last_success_date or last_success_date < _utc_today()):
+        run_status = "today_pending"
+
     status_text = {
         "success": "Loaded successfully",
+        "today_pending": "Today's refresh pending",
         "partial_success": "Partially loaded",
         "failed": "Daily run failed",
         "unknown": "Ingest status unknown",
@@ -299,6 +316,7 @@ def get_ingest_status(db: Session) -> dict:
 
     status_class = {
         "success": "border-green-700 bg-green-100 text-green-900",
+        "today_pending": "border-amber-700 bg-amber-100 text-amber-950",
         "partial_success": "border-amber-700 bg-amber-100 text-amber-950",
         "failed": "border-red-700 bg-red-100 text-red-900",
         "unknown": "border-gray-500 bg-white/70 text-gray-900",
@@ -308,7 +326,7 @@ def get_ingest_status(db: Session) -> dict:
         "status": run_status,
         "label": status_text,
         "class": status_class,
-        "checked_at": format_ingest_timestamp(_parse_metadata_datetime(run_data.get("checked_at")) or legacy_last_success),
+        "checked_at": format_ingest_timestamp(run_checked_at or legacy_last_success),
         "sources": source_rows,
     }
 
