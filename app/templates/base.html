@@ -33,7 +33,10 @@
       width: 440px; height: min(720px, 85vh); display: none; flex-direction: column;
       background: #fff; border-radius: 16px; overflow: hidden;
       box-shadow: 0 16px 48px rgba(0,0,0,.28);
+      transform-origin: bottom right;
+      transition: transform .22s ease, opacity .22s ease;
     }
+    #ai-advisor-panel.collapsing { transform: scale(.6); opacity: 0; pointer-events: none; }
     #ai-advisor-panel.open { display: flex; }
     #ai-advisor-panel.expanded { width: min(900px, 92vw); height: 92vh; bottom: 20px; }
     #ai-advisor-head {
@@ -54,11 +57,13 @@
     }
     #ai-advisor-loading.hidden { display: none; }
     .ai-loading-sub { font-size: 12px; color: #8a93a3; }
-    .ai-spinner {
-      width: 38px; height: 38px; border: 3px solid #cfe0f7; border-top-color: #2563eb;
-      border-radius: 50%; animation: ai-spin 0.8s linear infinite;
+    .ai-ring { width: 48px; height: 48px; transform: rotate(-90deg); }
+    .ai-ring-track { fill: none; stroke: #cfe0f7; stroke-width: 4; }
+    .ai-ring-fill {
+      fill: none; stroke: #2563eb; stroke-width: 4; stroke-linecap: round;
+      stroke-dasharray: 125.66; stroke-dashoffset: 125.66;
+      transition: stroke-dashoffset .25s linear;
     }
-    @keyframes ai-spin { to { transform: rotate(360deg); } }
     @media (max-width: 480px) {
       #ai-advisor-panel { right: 0; bottom: 0; width: 100vw; height: 100vh; border-radius: 0; }
       #ai-advisor-btn { right: 14px; bottom: 14px; }
@@ -77,7 +82,10 @@
     </div>
     <div id="ai-advisor-body">
       <div id="ai-advisor-loading">
-        <div class="ai-spinner" aria-hidden="true"></div>
+        <svg class="ai-ring" viewBox="0 0 48 48" aria-hidden="true">
+          <circle class="ai-ring-track" cx="24" cy="24" r="20"></circle>
+          <circle class="ai-ring-fill" cx="24" cy="24" r="20"></circle>
+        </svg>
         <div>Loading the advisor…</div>
         <div class="ai-loading-sub">First visit can take up to a minute</div>
       </div>
@@ -91,13 +99,37 @@
       var panel = document.getElementById("ai-advisor-panel");
       var frame = document.getElementById("ai-advisor-frame");
       var loading = document.getElementById("ai-advisor-loading");
+      var ringFill = loading ? loading.querySelector(".ai-ring-fill") : null;
+      var RING_C = 125.66;          // circumference = 2*pi*r (r=20)
+      var ringRAF = null, ringStart = null;
+      function stepRing(ts) {
+        if (ringStart === null) ringStart = ts;
+        var t = (ts - ringStart) / 1000;                  // seconds elapsed
+        var p = Math.min(1 - Math.exp(-t / 18), 0.96);    // fills toward full (~94% at 50s), never 100% until load
+        if (ringFill) ringFill.style.strokeDashoffset = RING_C * (1 - p);
+        ringRAF = requestAnimationFrame(stepRing);
+      }
       var loaded = false;
-      frame.addEventListener("load", function () { if (loading) loading.classList.add("hidden"); });
+      frame.addEventListener("load", function () {
+        if (ringRAF) cancelAnimationFrame(ringRAF);
+        if (ringFill) ringFill.style.strokeDashoffset = 0;             // snap the ring to complete
+        setTimeout(function () { if (loading) loading.classList.add("hidden"); }, 200);
+      });
       function open() {
-        if (!loaded) { frame.src = CHATBOT_URL + "?cb=" + Date.now(); loaded = true; }  // cache-bust so it's never stale
+        if (!loaded) {
+          frame.src = CHATBOT_URL + "?cb=" + Date.now();               // cache-bust so it's never stale
+          loaded = true; ringStart = null; ringRAF = requestAnimationFrame(stepRing);
+        }
+        panel.classList.remove("collapsing");
         panel.classList.add("open"); btn.style.display = "none";
       }
-      function close() { panel.classList.remove("open"); btn.style.display = ""; }
+      function close() {
+        panel.classList.add("collapsing");                            // graceful shrink toward the button
+        setTimeout(function () {
+          panel.classList.remove("open", "collapsing", "expanded");
+          btn.style.display = "";
+        }, 220);
+      }
       btn.addEventListener("click", open);
       document.getElementById("ai-advisor-close").addEventListener("click", close);
       document.getElementById("ai-advisor-expand").addEventListener("click", function () {
