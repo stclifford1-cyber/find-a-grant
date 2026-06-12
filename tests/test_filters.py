@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.database import Base
-from app.main import apply_filters, get_sources
+from app.main import apply_filters, clean_tags, get_sources
 from app.models import Opportunity
 
 
@@ -69,6 +69,22 @@ def _seed(db: Session) -> None:
 
 def _flatten(grouped: dict[str, list[Opportunity]]) -> list[str]:
     return [item.id for group in grouped.values() for item in group]
+
+
+def test_clean_tags_hides_filing_codes_and_redundant_programme_names() -> None:
+    tags = [
+        "HORIZON-INFRA-2026-TECH-01-02",
+        "HORIZON-INFRA-2026-01",
+        "HORIZON Research and Innovation Actions",
+        "Research Infrastructures 2026",
+        "Horizon Europe",
+        "Research Infrastructures 2026",
+    ]
+
+    assert clean_tags(tags, "Horizon Europe") == [
+        "Research and Innovation Actions",
+        "Research Infrastructures 2026",
+    ]
 
 
 def test_keyword_filters_title_and_description() -> None:

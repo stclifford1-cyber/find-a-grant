@@ -75,6 +75,30 @@ def format_uk_date(value: Optional[date]) -> str:
     return value.strftime("%d/%m/%Y")
 
 
+_TAG_CODE_PATTERN = re.compile(r"^[A-Z0-9]+(?:-[A-Z0-9]+){2,}$")
+
+
+def clean_tags(tags: list[str], source_label: str = "") -> list[str]:
+    cleaned_tags = []
+    source_name = (source_label or "").strip().lower()
+    duplicate_names = {source_name, "horizon europe"}
+
+    for raw_tag in tags:
+        tag = (raw_tag or "").strip()
+        if not tag or _TAG_CODE_PATTERN.match(tag):
+            continue
+        if tag.lower() in duplicate_names:
+            continue
+
+        tag = re.sub(r"^HORIZON\s+", "", tag, flags=re.I).strip()
+        if not tag or tag.lower() in duplicate_names:
+            continue
+        if tag not in cleaned_tags:
+            cleaned_tags.append(tag)
+
+    return cleaned_tags[:6]
+
+
 
 def _parse_date(value: Optional[str]) -> Optional[date]:
     if not value:
@@ -93,6 +117,7 @@ def _parse_float(value: Optional[str]) -> Optional[float]:
         return None
 
 templates.env.filters["uk_date"] = format_uk_date
+templates.env.filters["clean_tags"] = clean_tags
 templates.env.globals["date"] = date
 
 SOURCE_LABELS = {

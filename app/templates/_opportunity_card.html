@@ -11,7 +11,8 @@
   "konfer": "Konfer",
   "Konfer": "Konfer"
 } %}
-<p class="mt-1 text-sm font-medium text-gray-700">{{ source_label_map.get(opportunity.source, opportunity.source|replace("_", " ")|title) }}</p>
+{% set source_label = source_label_map.get(opportunity.source, opportunity.source|replace("_", " ")|title) %}
+<p class="mt-1 text-sm font-medium text-gray-700">{{ source_label }}</p>
 {% if opportunity.summary %}
   <p class="mt-2 text-sm text-gray-900">
     {{ opportunity.summary }}
@@ -84,8 +85,10 @@
       {% endfor %}
     {% endif %}
 
-    {% if tags %}
-      {% for tag in tags %}
+    {% set display_tags = tags | clean_tags(source_label) %}
+
+    {% if display_tags %}
+      {% for tag in display_tags %}
         <button type="button" class="rounded-full bg-blue-200 px-2.5 py-1 text-xs font-medium text-gray-900 border border-blue-300" hx-get="/opportunities" hx-vals='{{ {"sector_or_niche": tag} | tojson }}' hx-target="#results" hx-swap="innerHTML" hx-trigger="click">{{ tag }}</button>
       {% endfor %}
     {% else %}
