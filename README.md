@@ -255,7 +255,7 @@ The daily production refresh runs from:
 .github/workflows/daily-ingest.yml
 ```
 
-It has scheduled attempts at about 06:17, 08:17, 10:17, and 12:17 UTC, and can also be started manually from GitHub Actions. Multiple attempts reduce the impact of GitHub Actions delaying or dropping a scheduled event; the ingest is idempotent and the workflow uses concurrency so runs do not overlap. The off-hour minute reduces the chance of GitHub Actions delaying or dropping the scheduled run during top-of-hour load. The workflow installs dependencies and runs:
+It has scheduled attempts at about 00:17, 06:17, and 12:17 UTC, and can also be started manually from GitHub Actions. Multiple attempts reduce the impact of GitHub Actions delaying or dropping a scheduled event; the ingest is idempotent and the workflow uses concurrency so runs do not overlap. The off-hour minute reduces the chance of GitHub Actions delaying or dropping the scheduled run during top-of-hour load. The workflow installs dependencies and runs:
 
 ```bash
 python -m app.ingest_all
