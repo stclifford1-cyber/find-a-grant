@@ -15,6 +15,9 @@ jobs:
   ingest:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: write
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       CRON_SECRET: ${{ secrets.CRON_SECRET }}
@@ -39,3 +42,10 @@ jobs:
 
       - name: Run five-source ingest
         run: python -m app.ingest_all
+
+      # GitHub disables scheduled workflows after 60 days without commits; re-enabling resets that timer.
+      - name: Keep schedule alive
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/daily-ingest.yml/enable"
