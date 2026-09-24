@@ -155,14 +155,18 @@ def mark_expired_inactive() -> int:
 def mark_duplicates_inactive() -> int:
     db = SessionLocal()
     try:
-        # Collaborations aren't funding, so they never duplicate (or suppress) a grant listing.
-        rows = db.query(Opportunity).filter(
-            Opportunity.source != ingest_konfer.COLLABORATION_SOURCE,
+        live = db.query(Opportunity).filter(
             or_(
                 Opportunity.closes_date.is_(None),
                 Opportunity.closes_date >= date.today(),
             ),
         ).all()
+        # Collaborations stay out of the URL-key pass, which can reactivate stale grants; a collaboration
+        # is only ever the loser, dropped when a live grant carries the same title.
+        is_collab = lambda row: row.source == ingest_konfer.COLLABORATION_SOURCE
+        rows = [row for row in live if not is_collab(row)]
+        grant_titles = {_title_key(row.title) for row in rows if row.status != "inactive"}
+        collab_dupes = [row for row in live if is_collab(row) and row.status != "inactive" and _title_key(row.title) in grant_titles]
 
         owner_by_key: dict[str, Opportunity] = {}
         duplicates: set[str] = set()
@@ -190,6 +194,11 @@ def mark_duplicates_inactive() -> int:
                 row.status = status_from_dates(row.opened_date, row.closes_date)
                 row.last_seen = now
                 changed += 1
+
+        for row in collab_dupes:
+            row.status = "inactive"
+            row.last_seen = now
+            changed += 1
 
         db.commit()
         return changed

@@ -100,7 +100,7 @@ def test_collaborations_never_suppress_grants_in_duplicate_pass(monkeypatch):
     db = local_session()
     db.add_all([
         _row("iuk:2400", "innovate_uk", "Engineering biology R&D", url=grant_url),
-        _row("konfer-collab:1", "konfer_collaboration", "Engineering biology R&D", description=f"See {grant_url}"),
+        _row("konfer-collab:1", "konfer_collaboration", "Partner wanted for a bio project", description=f"See {grant_url}"),
     ])
     db.commit()
 
@@ -108,6 +108,31 @@ def test_collaborations_never_suppress_grants_in_duplicate_pass(monkeypatch):
 
     statuses = {o.id: o.status for o in local_session().query(Opportunity).all()}
     assert statuses == {"iuk:2400": "open", "konfer-collab:1": "open"}
+
+
+def test_collaboration_with_same_title_as_live_grant_is_hidden(monkeypatch):
+    engine, local_session = _session_factory()
+    monkeypatch.setattr(ingest_all, "SessionLocal", local_session)
+    db = local_session()
+    stale_grant = _row("iukbc:old", "iuk_business_connect", "Stale challenge")
+    stale_grant.status = "inactive"
+    db.add_all([
+        _row("iukbc:ix", "iuk_business_connect", "iX Challenge: Canal leak repair"),
+        _row("konfer-collab:ix", "konfer_collaboration", "iX Challenge - Canal leak repair"),
+        stale_grant,
+        _row("konfer-collab:stale", "konfer_collaboration", "Stale challenge"),
+    ])
+    db.commit()
+
+    ingest_all.mark_duplicates_inactive()
+
+    statuses = {o.id: o.status for o in local_session().query(Opportunity).all()}
+    assert statuses == {
+        "iukbc:ix": "open",
+        "konfer-collab:ix": "inactive",
+        "iukbc:old": "inactive",
+        "konfer-collab:stale": "open",
+    }
 
 
 def test_failed_collaboration_step_does_not_stop_refresh(monkeypatch):
