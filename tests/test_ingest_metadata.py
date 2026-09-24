@@ -31,6 +31,7 @@ def test_successful_ingest_records_last_successful_timestamp(monkeypatch) -> Non
     monkeypatch.setattr(ingest_all.ingest_ukri, "run", lambda: 3)
     monkeypatch.setattr(ingest_all.ingest_horizon_europe, "run", lambda: 4)
     monkeypatch.setattr(ingest_all.ingest_konfer, "run", lambda: 5)
+    monkeypatch.setattr(ingest_all.ingest_konfer, "run_collaborations", lambda: 6)
 
     results = ingest_all.run()
 
@@ -41,6 +42,7 @@ def test_successful_ingest_records_last_successful_timestamp(monkeypatch) -> Non
         "ukri": 3,
         "horizon_europe": 4,
         "konfer": 5,
+        "konfer_collaboration": 6,
         "duplicates_marked_inactive": 0,
         "expired_marked_inactive_after": 0,
         "overall_status": "success",
@@ -70,6 +72,7 @@ def test_source_failure_records_partial_success_and_continues(monkeypatch) -> No
     monkeypatch.setattr(ingest_all.ingest_ukri, "run", lambda: 3)
     monkeypatch.setattr(ingest_all.ingest_horizon_europe, "run", lambda: (_ for _ in ()).throw(RuntimeError("HTTP 500")))
     monkeypatch.setattr(ingest_all.ingest_konfer, "run", lambda: 5)
+    monkeypatch.setattr(ingest_all.ingest_konfer, "run_collaborations", lambda: 6)
 
     results = ingest_all.run()
 

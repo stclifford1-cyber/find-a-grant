@@ -18,7 +18,9 @@ from .schema import ensure_database_schema
 
 BASE = "https://konfer.online"
 API = "https://api.konfer.online/api/search/fundingopportunities"
+COLLABORATIONS_API = "https://api.konfer.online/api/search/collaborations"
 SOURCE = "konfer"
+COLLABORATION_SOURCE = "konfer_collaboration"
 PAGE_SIZE = 90
 LAST_KONFER_CHECK_KEY = "source_check:konfer"
 
@@ -91,14 +93,14 @@ def is_business_connect_url(value: str | None) -> bool:
     return urlparse(value).netloc.lower().endswith("iuk-business-connect.org.uk")
 
 
-def fetch_page(page: int = 1) -> dict:
+def fetch_page(page: int = 1, api: str = API) -> dict:
     params = {
         "q": "",
         "page": page,
         "itemsRequired": PAGE_SIZE,
         "sortBy": "openDate",
     }
-    response = requests.get(API, params=params, headers=HEADERS, timeout=25)
+    response = requests.get(api, params=params, headers=HEADERS, timeout=25)
     response.raise_for_status()
     return response.json()
 
@@ -143,12 +145,43 @@ def normalise_record(record: dict) -> dict:
     }
 
 
-def crawl(max_pages: int = 20) -> list[dict]:
+def normalise_collaboration(record: dict) -> dict:
+    mongo_id = record.get("mongoId") or record.get("elasticSearchId")
+    title = clean_text(record.get("title", ""))
+    summary = clean_text(record.get("summary", ""))
+    organisation = clean_text(record.get("organisation") or record.get("institutionName") or "")
+    sector = clean_text(record.get("sector") or (record.get("konferCategory") or {}).get("category") or "")
+    path = record.get("url") or ""
+    url = f"{BASE}{path}" if path.startswith("/") else path or f"{BASE}/collaborations"
+
+    description_parts = ["Collaboration offer, not funding."]
+    if organisation:
+        description_parts.append(f"Organisation: {organisation}")
+    if summary:
+        description_parts.append(summary)
+
+    return {
+        "id": f"konfer-collab:{mongo_id}",
+        "source": COLLABORATION_SOURCE,
+        "title": title,
+        "url": url,
+        "summary": summary,
+        "description": "\n\n".join(description_parts),
+        "opened_date": parse_konfer_date(record.get("startDate") or ""),
+        "closes_date": parse_konfer_date(record.get("endDate") or ""),
+        "funding_min": None,
+        "funding_max": None,
+        "sector_tags": sector or None,
+        "niche_tags": ", ".join(value for value in [organisation, "Collaboration"] if value),
+    }
+
+
+def crawl(max_pages: int = 20, fetch=None, normalise=normalise_record) -> list[dict]:
     items: list[dict] = []
     seen: set[str] = set()
 
     for page in range(1, max_pages + 1):
-        data = fetch_page(page)
+        data = (fetch or fetch_page)(page)
         results = data.get("results") or []
         if not results:
             break
@@ -156,7 +189,7 @@ def crawl(max_pages: int = 20) -> list[dict]:
         for record in results:
             if is_business_connect_url(record.get("fundingUrl")):
                 continue
-            item = normalise_record(record)
+            item = normalise(record)
             if item["id"] in seen:
                 continue
             seen.add(item["id"])
@@ -169,7 +202,7 @@ def crawl(max_pages: int = 20) -> list[dict]:
     return items
 
 
-def upsert(items: list[dict], mark_stale: bool = True) -> int:
+def upsert(items: list[dict], mark_stale: bool = True, stale_sources: tuple[str, ...] = (SOURCE, "Konfer")) -> int:
     ensure_database_schema(engine)
     db = SessionLocal()
     now = datetime.now(timezone.utc)
@@ -227,7 +260,7 @@ def upsert(items: list[dict], mark_stale: bool = True) -> int:
 
         if mark_stale:
             stale_query = db.query(Opportunity).filter(
-                Opportunity.source.in_([SOURCE, "Konfer"]),
+                Opportunity.source.in_(stale_sources),
                 Opportunity.status != "inactive",
             )
             if seen_ids:
@@ -272,6 +305,11 @@ def run(max_pages: int = 20) -> int:
     changed = upsert(items, mark_stale=True)
     record_konfer_check(len(items))
     return changed
+
+
+def run_collaborations(max_pages: int = 5) -> int:
+    items = crawl(max_pages, lambda page: fetch_page(page, COLLABORATIONS_API), normalise_collaboration)
+    return upsert(items, mark_stale=True, stale_sources=(COLLABORATION_SOURCE,))
 
 
 if __name__ == "__main__":

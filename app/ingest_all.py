@@ -37,6 +37,7 @@ SOURCE_INGEST_STEPS = (
     "ukri",
     "horizon_europe",
     "konfer",
+    "konfer_collaboration",
 )
 logger = logging.getLogger(__name__)
 
@@ -154,7 +155,9 @@ def mark_expired_inactive() -> int:
 def mark_duplicates_inactive() -> int:
     db = SessionLocal()
     try:
+        # Collaborations aren't funding, so they never duplicate (or suppress) a grant listing.
         rows = db.query(Opportunity).filter(
+            Opportunity.source != ingest_konfer.COLLABORATION_SOURCE,
             or_(
                 Opportunity.closes_date.is_(None),
                 Opportunity.closes_date >= date.today(),
@@ -350,6 +353,7 @@ def run(deadline: float | None = None, min_remaining_seconds: float = DEFAULT_MI
     _run_source_step(results, failures, "ukri", ingest_ukri.run, deadline, min_remaining_seconds)
     _run_source_step(results, failures, "horizon_europe", ingest_horizon_europe.run, deadline, min_remaining_seconds)
     _run_source_step(results, failures, "konfer", ingest_konfer.run, deadline, min_remaining_seconds)
+    _run_source_step(results, failures, "konfer_collaboration", ingest_konfer.run_collaborations, deadline, min_remaining_seconds)
     _run_step(results, "duplicates_marked_inactive", mark_duplicates_inactive, deadline, min_remaining_seconds)
     _run_step(results, "expired_marked_inactive_after", mark_expired_inactive, deadline, min_remaining_seconds)
     overall_status = "failed" if len(failures) == len(SOURCE_INGEST_STEPS) else "partial_success" if failures else "success"

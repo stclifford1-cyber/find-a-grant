@@ -12,7 +12,7 @@ from app.database import Base
 from app.main import app, csv_filename, get_db
 from app.models import Opportunity
 
-HEADER = ["Title", "Source", "Status", "Opens", "Closes", "Funding Min GBP", "Funding Max GBP", "Tags", "URL"]
+HEADER = ["Title", "Source", "Status", "Funding?", "Opens", "Closes", "Funding Min GBP", "Funding Max GBP", "Tags", "URL"]
 
 
 def _row(id_, title, source="innovate_uk", **kw):
@@ -71,7 +71,7 @@ def test_csv_respects_keyword_and_includes_all_sections(client):
 
 def test_csv_row_contents(client):
     rows = _parse(client.get("/opportunities.csv", params={"keyword": "mission hub"}))
-    title, source, status, _opens, _closes, fmin, fmax, tags, url = rows[1]
+    title, source, status, _funding, _opens, _closes, fmin, fmax, tags, url = rows[1]
     assert (title, source, status, fmin, fmax, url) == (
         "Engineering biology mission hub", "Innovate UK", "open", "100000", "500000", "https://example.org/EB-1")
     assert tags == "Life sciences; Synthetic biology"

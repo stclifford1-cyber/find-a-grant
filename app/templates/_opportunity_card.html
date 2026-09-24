@@ -9,10 +9,15 @@
   "horizon_europe": "Horizon Europe",
   "ukri": "UKRI",
   "konfer": "Konfer",
-  "Konfer": "Konfer"
+  "Konfer": "Konfer",
+  "konfer_collaboration": "Konfer Collaborations"
 } %}
 {% set source_label = source_label_map.get(opportunity.source, opportunity.source|replace("_", " ")|title) %}
 <p class="mt-1 text-sm font-medium text-gray-700">{{ source_label }}</p>
+{% set is_collaboration = opportunity.source == "konfer_collaboration" %}
+{% if is_collaboration %}
+  <span class="mt-2 inline-flex items-center rounded-full border border-amber-500 bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900">Not funding · collaboration</span>
+{% endif %}
 {% if opportunity.summary %}
   <p class="mt-2 text-sm text-gray-900">
     {{ opportunity.summary }}
@@ -66,7 +71,7 @@
           -
           {{ "GBP {:,}".format(opportunity.funding_max | int) if opportunity.funding_max is not none else "No upper limit" }}
         {% else %}
-          Not listed
+          {{ "Not applicable" if is_collaboration else "Not listed" }}
         {% endif %}
       </p>
     </div>

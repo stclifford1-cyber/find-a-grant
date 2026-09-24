@@ -185,6 +185,7 @@ def test_core_source_filters_are_available_before_every_source_has_rows() -> Non
             {"value": "ukri", "label": "UKRI"},
             {"value": "horizon_europe", "label": "Horizon Europe"},
             {"value": "konfer", "label": "Konfer"},
+            {"value": "konfer_collaboration", "label": "Konfer Collaborations"},
         ]
     finally:
         db.close()
@@ -213,6 +214,7 @@ def test_konfer_source_filter_stays_available_without_live_rows() -> None:
             {"value": "ukri", "label": "UKRI"},
             {"value": "horizon_europe", "label": "Horizon Europe"},
             {"value": "konfer", "label": "Konfer"},
+            {"value": "konfer_collaboration", "label": "Konfer Collaborations"},
         ]
     finally:
         db.close()

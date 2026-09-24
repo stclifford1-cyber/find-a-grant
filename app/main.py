@@ -131,6 +131,7 @@ SOURCE_LABELS = {
     "ukri": "UKRI",
     "konfer": "Konfer",
     "Konfer": "Konfer",
+    "konfer_collaboration": "Konfer Collaborations",
 }
 
 SOURCE_ALIASES = {
@@ -138,6 +139,7 @@ SOURCE_ALIASES = {
     "horizon_europe": ["horizon_europe"],
     "ukri": ["ukri"],
     "konfer": ["konfer", "Konfer"],
+    "konfer_collaboration": ["konfer_collaboration"],
 }
 
 SOURCE_ORDER = {
@@ -145,9 +147,10 @@ SOURCE_ORDER = {
     "ukri": 1,
     "horizon_europe": 2,
     "konfer": 3,
+    "konfer_collaboration": 4,
 }
 
-CORE_SOURCE_FILTERS = ("innovate_uk", "ukri", "horizon_europe", "konfer")
+CORE_SOURCE_FILTERS = ("innovate_uk", "ukri", "horizon_europe", "konfer", "konfer_collaboration")
 DEFAULT_INGEST_TIMEOUT_SECONDS = 300.0
 INGEST_TIMEOUT_ENV = "INGEST_TIMEOUT_SECONDS"
 LAST_SUCCESSFUL_INGEST_KEY = "last_successful_ingest_at"
@@ -160,6 +163,7 @@ INGEST_STATUS_SOURCES = (
     ("ukri", "UKRI"),
     ("horizon_europe", "Horizon Europe"),
     ("konfer", "Konfer"),
+    ("konfer_collaboration", "Konfer Collaborations"),
 )
 
 
@@ -589,7 +593,7 @@ def opportunities_partial(
 
 
 UK_TZ = ZoneInfo("Europe/London")
-CSV_HEADER = ["Title", "Source", "Status", "Opens", "Closes", "Funding Min GBP", "Funding Max GBP", "Tags", "URL"]
+CSV_HEADER = ["Title", "Source", "Status", "Funding?", "Opens", "Closes", "Funding Min GBP", "Funding Max GBP", "Tags", "URL"]
 
 
 def _csv_safe(value) -> str:
@@ -638,6 +642,7 @@ def opportunities_csv(
                 o.title,
                 source_label(o.source),
                 o.status,
+                "Not funding" if o.source == "konfer_collaboration" else "",
                 o.opened_date,
                 o.closes_date,
                 int(o.funding_min) if o.funding_min is not None else None,
