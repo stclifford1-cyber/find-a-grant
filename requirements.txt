@@ -7,3 +7,4 @@ httpx==0.28.1
 requests==2.32.3
 beautifulsoup4==4.13.3
 psycopg[binary]==3.3.4
+tzdata==2025.2

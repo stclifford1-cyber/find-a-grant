@@ -8,6 +8,7 @@ import secrets
 import time
 from datetime import date, datetime, timezone
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, Response
@@ -587,6 +588,7 @@ def opportunities_partial(
     )
 
 
+UK_TZ = ZoneInfo("Europe/London")
 CSV_HEADER = ["Title", "Source", "Status", "Opens", "Closes", "Funding Min GBP", "Funding Max GBP", "Tags", "URL"]
 
 
@@ -647,7 +649,7 @@ def opportunities_csv(
         for status in ("open", "rolling", "upcoming")
         for o in grouped[status]
     )
-    filename = csv_filename(keyword, selected_sources, datetime.now(timezone.utc))
+    filename = csv_filename(keyword, selected_sources, datetime.now(UK_TZ))
     return Response(
         content="﻿" + out.getvalue(),  # BOM so Excel opens UTF-8 (£, accents) correctly
         media_type="text/csv; charset=utf-8",
