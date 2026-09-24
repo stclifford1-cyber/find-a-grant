@@ -152,6 +152,13 @@
       <div class="flex justify-end gap-3">
         <button
           type="button"
+          class="inline-flex items-center rounded-lg border border-blue-600 bg-white px-5 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-50"
+          onclick="window.location.href = '/opportunities.csv?' + new URLSearchParams(new FormData(document.getElementById('filters')));"
+        >
+          Download CSV
+        </button>
+        <button
+          type="button"
           class="inline-flex items-center rounded-lg border border-gray-500 bg-slate-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-600"
           onclick="document.getElementById('filters').reset(); updateSourceChips(); htmx.ajax('GET', '/opportunities', {target: '#results', swap: 'innerHTML'});"
         >

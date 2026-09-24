@@ -1,3 +1,5 @@
+import csv
+import io
 import logging
 import os
 import json
@@ -8,7 +10,7 @@ from datetime import date, datetime, timezone
 from typing import Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import or_
@@ -582,6 +584,74 @@ def opportunities_partial(
             "request": request,
             "grouped": grouped,
         },
+    )
+
+
+CSV_HEADER = ["Title", "Source", "Status", "Opens", "Closes", "Funding Min GBP", "Funding Max GBP", "Tags", "URL"]
+
+
+def _csv_safe(value) -> str:
+    text = "" if value is None else str(value)
+    # Titles come from third-party sites; stop spreadsheet apps executing them as formulas.
+    return f"'{text}" if text[:1] in ("=", "+", "-", "@") else text
+
+
+def csv_filename(keyword: Optional[str], sources: list[str], now: datetime) -> str:
+    slug = lambda text: re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+    label = slug(keyword or "")[:40].strip("-") or "_".join(slug(s) for s in sources) or "all"
+    return f"find-a-grant_{label}_{now:%Y-%m-%d_%H%M}.csv"
+
+
+@app.get("/opportunities.csv")
+def opportunities_csv(
+    keyword: Optional[str] = Query(default=None),
+    source: Optional[list[str]] = Query(default=None),
+    opens_from: Optional[str] = Query(default=None),
+    closes_from: Optional[str] = Query(default=None),
+    closes_to: Optional[str] = Query(default=None),
+    sector_or_niche: Optional[str] = Query(default=None),
+    min_funding: Optional[str] = Query(default=None),
+    max_funding: Optional[str] = Query(default=None),
+    db: Session = Depends(get_db),
+):
+    selected_sources = normalise_source_filter(source)
+    grouped = apply_filters(
+        db,
+        keyword,
+        selected_sources,
+        _parse_date(opens_from),
+        _parse_date(closes_from),
+        _parse_date(closes_to),
+        sector_or_niche,
+        _parse_float(min_funding),
+        _parse_float(max_funding),
+    )
+    out = io.StringIO()
+    writer = csv.writer(out)
+    writer.writerow(CSV_HEADER)
+    writer.writerows(
+        [
+            _csv_safe(value)
+            for value in (
+                o.title,
+                source_label(o.source),
+                o.status,
+                o.opened_date,
+                o.closes_date,
+                int(o.funding_min) if o.funding_min is not None else None,
+                int(o.funding_max) if o.funding_max is not None else None,
+                "; ".join(t for t in (o.sector_tags, o.niche_tags) if t),
+                o.url,
+            )
+        ]
+        for status in ("open", "rolling", "upcoming")
+        for o in grouped[status]
+    )
+    filename = csv_filename(keyword, selected_sources, datetime.now(timezone.utc))
+    return Response(
+        content="﻿" + out.getvalue(),  # BOM so Excel opens UTF-8 (£, accents) correctly
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
 
