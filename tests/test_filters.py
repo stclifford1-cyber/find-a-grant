@@ -1,4 +1,4 @@
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -148,6 +148,36 @@ def test_source_and_date_and_funding_filters() -> None:
         db.close()
 
 
+def test_cbe_is_a_distinct_filterable_source() -> None:
+    db = _make_session()
+    try:
+        _seed(db)
+        db.add(
+            Opportunity(
+                id="horizon:horizon-ju-cbe-2025-ia-03",
+                source="cbe",
+                title="Bio-based Value Chains",
+                url="https://ec.europa.eu/info/funding-tenders/opportunities/portal/cbe",
+                opened_date=date.today(),
+                closes_date=date.today() + timedelta(days=90),
+                funding_min=1_000_000,
+                funding_max=5_000_000,
+                description="Circular bio-based Europe innovation action.",
+                status="open",
+                last_seen=datetime.now(timezone.utc),
+            )
+        )
+        db.commit()
+
+        grouped = apply_filters(db, None, "cbe", None, None, None, None, None, None)
+        assert _flatten(grouped) == ["horizon:horizon-ju-cbe-2025-ia-03"]
+
+        chips = {chip["value"]: chip["label"] for chip in get_sources(db)}
+        assert chips["cbe"] == "CBE"
+    finally:
+        db.close()
+
+
 def test_multiple_source_filters_use_normalised_aliases() -> None:
     db = _make_session()
     try:
@@ -184,6 +214,7 @@ def test_core_source_filters_are_available_before_every_source_has_rows() -> Non
             {"value": "innovate_uk", "label": "Innovate UK"},
             {"value": "ukri", "label": "UKRI"},
             {"value": "horizon_europe", "label": "Horizon Europe"},
+            {"value": "cbe", "label": "CBE"},
             {"value": "konfer", "label": "Konfer"},
             {"value": "konfer_collaboration", "label": "Konfer Collaborations"},
         ]
@@ -213,6 +244,7 @@ def test_konfer_source_filter_stays_available_without_live_rows() -> None:
             {"value": "innovate_uk", "label": "Innovate UK"},
             {"value": "ukri", "label": "UKRI"},
             {"value": "horizon_europe", "label": "Horizon Europe"},
+            {"value": "cbe", "label": "CBE"},
             {"value": "konfer", "label": "Konfer"},
             {"value": "konfer_collaboration", "label": "Konfer Collaborations"},
         ]

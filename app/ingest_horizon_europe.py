@@ -25,6 +25,11 @@ FRAMEWORK_PROGRAMME = "43108390"
 PROGRAMME_PERIOD = "2021 - 2027"
 OPEN_STATUS = "31094502"
 FORTHCOMING_STATUS = "31094501"
+CBE_SOURCE = "cbe"
+
+
+def is_cbe(identifier: str | None) -> bool:
+    return bool(identifier) and "JU-CBE-" in identifier.upper()
 HEADERS = {
     "Accept": "application/json",
     "User-Agent": "find-a-grant-ingester/0.1",
@@ -246,7 +251,7 @@ def normalise_result(result: dict, eur_to_gbp: Optional[float], rate_date: Optio
     summary = clean_text(result.get("summary") or description[:320] or title)
     return {
         "id": opportunity_id(identifier),
-        "source": SOURCE,
+        "source": CBE_SOURCE if is_cbe(identifier) else SOURCE,
         "title": title,
         "url": url,
         "opened_date": opened,
@@ -386,7 +391,7 @@ def upsert(items: list[dict], mark_stale: bool = True) -> int:
 
         if mark_stale:
             stale_query = db.query(Opportunity).filter(
-                Opportunity.source == SOURCE,
+                Opportunity.source.in_([SOURCE, CBE_SOURCE]),
                 Opportunity.status != "inactive",
             )
             if seen_ids:

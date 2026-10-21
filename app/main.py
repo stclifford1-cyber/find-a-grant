@@ -128,6 +128,7 @@ SOURCE_LABELS = {
     "Innovate UK": "Innovate UK",
     "iuk_business_connect": "Innovate UK",
     "horizon_europe": "Horizon Europe",
+    "cbe": "CBE",
     "ukri": "UKRI",
     "konfer": "Konfer",
     "Konfer": "Konfer",
@@ -137,6 +138,7 @@ SOURCE_LABELS = {
 SOURCE_ALIASES = {
     "innovate_uk": ["innovate_uk", "Innovate UK", "iuk_business_connect"],
     "horizon_europe": ["horizon_europe"],
+    "cbe": ["cbe"],
     "ukri": ["ukri"],
     "konfer": ["konfer", "Konfer"],
     "konfer_collaboration": ["konfer_collaboration"],
@@ -146,11 +148,12 @@ SOURCE_ORDER = {
     "innovate_uk": 0,
     "ukri": 1,
     "horizon_europe": 2,
-    "konfer": 3,
-    "konfer_collaboration": 4,
+    "cbe": 3,
+    "konfer": 4,
+    "konfer_collaboration": 5,
 }
 
-CORE_SOURCE_FILTERS = ("innovate_uk", "ukri", "horizon_europe", "konfer", "konfer_collaboration")
+CORE_SOURCE_FILTERS = ("innovate_uk", "ukri", "horizon_europe", "cbe", "konfer", "konfer_collaboration")
 DEFAULT_INGEST_TIMEOUT_SECONDS = 300.0
 INGEST_TIMEOUT_ENV = "INGEST_TIMEOUT_SECONDS"
 LAST_SUCCESSFUL_INGEST_KEY = "last_successful_ingest_at"
@@ -190,7 +193,7 @@ def normalise_source_filter(value: Optional[str | list[str]]) -> list[str]:
 
 
 def source_reference(opportunity: Opportunity) -> str:
-    if opportunity.source == "horizon_europe" and opportunity.id.startswith("horizon:"):
+    if opportunity.source in ("horizon_europe", "cbe") and opportunity.id.startswith("horizon:"):
         text = "\n".join(
             value
             for value in [
