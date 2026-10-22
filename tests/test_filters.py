@@ -1,4 +1,4 @@
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -184,6 +184,7 @@ def test_core_source_filters_are_available_before_every_source_has_rows() -> Non
             {"value": "innovate_uk", "label": "Innovate UK"},
             {"value": "ukri", "label": "UKRI"},
             {"value": "horizon_europe", "label": "Horizon Europe"},
+            {"value": "eureka", "label": "Eureka"},
             {"value": "konfer", "label": "Konfer"},
             {"value": "konfer_collaboration", "label": "Konfer Collaborations"},
         ]
@@ -213,9 +214,39 @@ def test_konfer_source_filter_stays_available_without_live_rows() -> None:
             {"value": "innovate_uk", "label": "Innovate UK"},
             {"value": "ukri", "label": "UKRI"},
             {"value": "horizon_europe", "label": "Horizon Europe"},
+            {"value": "eureka", "label": "Eureka"},
             {"value": "konfer", "label": "Konfer"},
             {"value": "konfer_collaboration", "label": "Konfer Collaborations"},
         ]
+    finally:
+        db.close()
+
+
+def test_eureka_is_a_distinct_filterable_source() -> None:
+    db = _make_session()
+    try:
+        _seed(db)
+        db.add(
+            Opportunity(
+                id="eureka:smart-call-10-2026",
+                source="eureka",
+                title="SMART Call 10 – 2026",
+                url="https://www.eurekanetwork.org/programmes-and-calls/eureka-clusters/smart-call-10-2026/",
+                opened_date=date.today(),
+                closes_date=date.today() + timedelta(days=90),
+                geographic_scope="uk_wide",
+                description="Eureka Cluster call.",
+                status="open",
+                last_seen=datetime.now(timezone.utc),
+            )
+        )
+        db.commit()
+
+        grouped = apply_filters(db, None, "eureka", None, None, None, None, None, None)
+        assert _flatten(grouped) == ["eureka:smart-call-10-2026"]
+
+        chips = {c["value"]: c["label"] for c in get_sources(db)}
+        assert chips["eureka"] == "Eureka"
     finally:
         db.close()
 

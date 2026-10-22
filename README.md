@@ -15,6 +15,7 @@ All current sources have repeatable ingestion pipelines and are included in the 
 | Konfer | `app.ingest_konfer` | Included as a standing source. Konfer records that point to Business Connect opportunities are skipped to avoid duplicates under two source labels. |
 | Horizon Europe | `app.ingest_horizon_europe` | Uses the EU Funding & Tenders search API and stores euro values with approximate GBP conversion. |
 | UKRI | `app.ingest_ukri` | Uses UKRI Funding Finder. Innovate-only UKRI listings are skipped to avoid duplicate Innovate UK competitions. |
+| Eureka | `app.ingest_eureka` | Reads a curated JSON dataset (`app/data/eureka_calls.json`) because the Eureka site is Cloudflare-protected with no public API. UK-eligible calls only (the UK must be a listed participating country). Refreshed by re-pulling the site and updating the JSON; the capture date is shown on each card. |
 
 ## Features
 
