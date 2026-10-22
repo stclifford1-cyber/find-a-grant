@@ -41,10 +41,10 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 def _security_headers() -> dict[str, str]:
     content_security_policy = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com; "
+        "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://va.vercel-scripts.com; "
         "style-src 'self' 'unsafe-inline'; "
         "img-src 'self' data:; "
-        "connect-src 'self'; "
+        "connect-src 'self' https://va.vercel-scripts.com; "
         "object-src 'none'; "
         "frame-src https://grant-rag-chatbot.onrender.com; "  # allow the embedded AI advisor widget
         "base-uri 'self'; "
