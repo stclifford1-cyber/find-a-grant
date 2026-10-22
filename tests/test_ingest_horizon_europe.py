@@ -67,6 +67,55 @@ def test_competitive_calls_link_to_portal_search() -> None:
     assert "isExactMatch=true" in item["url"]
 
 
+def test_cbe_calls_are_labelled_as_their_own_source() -> None:
+    result = _sample_result()
+    result["metadata"]["identifier"] = ["HORIZON-JU-CBE-2025-IA-03"]
+
+    cbe = ingest_horizon_europe.normalise_result(result, 0.86, date(2026, 6, 1))
+    horizon = ingest_horizon_europe.normalise_result(_sample_result(), 0.86, date(2026, 6, 1))
+
+    assert cbe is not None and cbe["source"] == ingest_horizon_europe.CBE_SOURCE
+    assert horizon is not None and horizon["source"] == ingest_horizon_europe.SOURCE
+
+
+def test_upsert_sweep_marks_missing_cbe_rows_inactive(monkeypatch) -> None:
+    engine = create_engine("sqlite:///:memory:")
+    Base.metadata.create_all(bind=engine)
+    local_session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    monkeypatch.setattr(ingest_horizon_europe, "engine", engine)
+    monkeypatch.setattr(ingest_horizon_europe, "SessionLocal", local_session)
+
+    db = local_session()
+    db.add(
+        Opportunity(
+            id="horizon:horizon-ju-cbe-2024-ia-01",
+            source=ingest_horizon_europe.CBE_SOURCE,
+            title="Withdrawn CBE Topic",
+            url="https://ec.europa.eu/cbe-stale",
+            opened_date=date(2026, 1, 1),
+            closes_date=date(2026, 12, 1),
+            description="Old CBE topic",
+            status="open",
+            last_seen=datetime.now(timezone.utc),
+        )
+    )
+    db.commit()
+    db.close()
+
+    item = ingest_horizon_europe.normalise_result(_sample_result(), 0.86, date(2026, 6, 1))
+    assert item is not None
+    ingest_horizon_europe.upsert([item], mark_stale=True)
+
+    db = local_session()
+    try:
+        stale = db.query(Opportunity).filter(
+            Opportunity.id == "horizon:horizon-ju-cbe-2024-ia-01"
+        ).one()
+        assert stale.status == "inactive"
+    finally:
+        db.close()
+
+
 def test_upsert_marks_missing_horizon_rows_inactive(monkeypatch) -> None:
     engine = create_engine("sqlite:///:memory:")
     Base.metadata.create_all(bind=engine)

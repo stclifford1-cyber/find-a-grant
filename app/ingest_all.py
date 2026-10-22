@@ -23,6 +23,7 @@ SOURCE_PRIORITY = {
     "Innovate UK": 1,
     "ukri": 1,
     "horizon_europe": 0,
+    "cbe": 0,
     "konfer": 2,
     "Konfer": 2,
     "eureka": 2,
