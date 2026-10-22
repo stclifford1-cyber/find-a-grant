@@ -1,0 +1,97 @@
+{
+  "captured_at": "2026-10-22",
+  "source_page": "https://www.eurekanetwork.org/programmes-and-calls/",
+  "note": "UK-eligible Eureka calls only. A call is included only when the United Kingdom is a listed participating country, so UK applicants can access national funding. Funding value is left blank unless Eureka publishes a single call-level amount. Refresh by re-pulling from the Eureka site (Cloudflare-protected, no public API) and updating this file.",
+  "calls": [
+    {
+      "title": "CELTIC-NEXT call for projects – Autumn 2026",
+      "programme": "Eureka Clusters",
+      "url": "https://www.eurekanetwork.org/programmes-and-calls/eureka-clusters/celtic-next-call-for-projects-autumn-2026/",
+      "opened": "2026-07-01",
+      "closes": "2026-10-26",
+      "funding_eur": null,
+      "not_funding": false,
+      "summary": "CELTIC-NEXT is the Eureka Cluster for next-generation communications and ICT. This call funds collaborative R&D projects in advanced networking, connectivity and digital technologies, delivered through participating national funding agencies."
+    },
+    {
+      "title": "Eurogia2030 – Call 31",
+      "programme": "Eureka Clusters",
+      "url": "https://www.eurekanetwork.org/programmes-and-calls/eureka-clusters/eurogia2030-call-31/",
+      "opened": "2026-07-01",
+      "closes": "2026-10-29",
+      "funding_eur": null,
+      "not_funding": false,
+      "summary": "Eurogia2030 is the Eureka Cluster for low-carbon energy. This call funds collaborative R&D projects developing low-carbon technologies that reduce climate change and support sustainable growth."
+    },
+    {
+      "title": "ITEA call for projects 2026",
+      "programme": "Eureka Clusters",
+      "url": "https://www.eurekanetwork.org/programmes-and-calls/eureka-clusters/itea-call-for-projects-2026/",
+      "opened": null,
+      "closes": "2026-11-02",
+      "funding_eur": null,
+      "not_funding": false,
+      "summary": "ITEA is the Eureka Cluster for software innovation. This call funds collaborative R&D projects in software-intensive systems and services across industry sectors."
+    },
+    {
+      "title": "5th Innowwide call for market feasibility projects – Autumn 2026",
+      "programme": "Innowwide",
+      "url": "https://www.eurekanetwork.org/programmes-and-calls/innowwide/5th-innowwide-call-for-market-feasibility-projects-autumn-2026/",
+      "opened": "2026-10-01",
+      "closes": "2026-12-01",
+      "funding_eur": 60000,
+      "not_funding": false,
+      "summary": "Innowwide funds market feasibility studies for innovative SMEs exploring business opportunities in the Americas, Africa, Asia or Oceania. Successful applicants receive a lump sum of €60,000."
+    },
+    {
+      "title": "Globalstars call with Japan 2026",
+      "programme": "Globalstars",
+      "url": "https://www.eurekanetwork.org/programmes-and-calls/globalstars/globalstars-call-with-japan-2026/",
+      "opened": "2026-10-07",
+      "closes": "2027-01-20",
+      "funding_eur": null,
+      "not_funding": false,
+      "summary": "A Globalstars call enabling organisations from Eureka countries to run collaborative R&D projects with partners in Japan, across most technology areas with a civilian purpose."
+    },
+    {
+      "title": "Xecs Call 6 – 2026",
+      "programme": "Eureka Clusters",
+      "url": "https://www.eurekanetwork.org/programmes-and-calls/eureka-clusters/xecs-call-6-2026/",
+      "opened": null,
+      "closes": "2027-01-21",
+      "funding_eur": null,
+      "not_funding": false,
+      "summary": "Xecs is the Eureka Cluster for electronic components and systems. This call funds collaborative R&D projects in electronics, from materials and devices to systems and applications."
+    },
+    {
+      "title": "SMART Call 10 – 2026",
+      "programme": "Eureka Clusters",
+      "url": "https://www.eurekanetwork.org/programmes-and-calls/eureka-clusters/smart-call-10-2026/",
+      "opened": "2026-07-01",
+      "closes": "2027-01-26",
+      "funding_eur": null,
+      "not_funding": false,
+      "summary": "SMART is the Eureka Cluster for advanced manufacturing. This bottom-up call funds collaborative R&D projects aligned with SMART's technology roadmap for smart, sustainable manufacturing."
+    },
+    {
+      "title": "Open call for Network Projects applications",
+      "programme": "Network Projects",
+      "url": "https://www.eurekanetwork.org/programmes-and-calls/network-projects/network-projects-open-call/",
+      "opened": "2025-01-01",
+      "closes": "2030-01-01",
+      "funding_eur": null,
+      "not_funding": false,
+      "summary": "A rolling, bottom-up call for international collaborative R&D projects in any technology area with a civilian purpose. Projects need a consortium of at least two organisations from two participating countries."
+    },
+    {
+      "title": "Eurostars Call 12 for projects – deadline March 2027",
+      "programme": "Eurostars",
+      "url": "https://www.eurekanetwork.org/programmes-and-calls/eurostars/eurostars-call-12-for-projects-deadline-march-2027/",
+      "opened": null,
+      "closes": "2027-03-04",
+      "funding_eur": null,
+      "not_funding": false,
+      "summary": "Eurostars supports R&D-performing SMEs leading international collaborative innovation projects. Funding is provided by national agencies in participating countries; UK participation is administered by Innovate UK."
+    }
+  ]
+}

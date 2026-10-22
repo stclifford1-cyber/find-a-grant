@@ -11,7 +11,7 @@ from urllib.parse import urlparse
 
 from sqlalchemy import or_
 
-from . import ingest_horizon_europe, ingest_innovateuk, ingest_iuk_business_connect, ingest_konfer, ingest_ukri
+from . import ingest_eureka, ingest_horizon_europe, ingest_innovateuk, ingest_iuk_business_connect, ingest_konfer, ingest_ukri
 from .database import SessionLocal, engine
 from .models import AppMetadata, Opportunity
 from .schema import ensure_database_schema
@@ -26,6 +26,8 @@ SOURCE_PRIORITY = {
     "cbe": 0,
     "konfer": 2,
     "Konfer": 2,
+    "eureka": 2,
+    "eureka_not_funding": 2,
 }
 
 DEFAULT_MIN_REMAINING_SECONDS = 30.0
@@ -39,6 +41,7 @@ SOURCE_INGEST_STEPS = (
     "horizon_europe",
     "konfer",
     "konfer_collaboration",
+    "eureka",
 )
 logger = logging.getLogger(__name__)
 
@@ -364,6 +367,7 @@ def run(deadline: float | None = None, min_remaining_seconds: float = DEFAULT_MI
     _run_source_step(results, failures, "horizon_europe", ingest_horizon_europe.run, deadline, min_remaining_seconds)
     _run_source_step(results, failures, "konfer", ingest_konfer.run, deadline, min_remaining_seconds)
     _run_source_step(results, failures, "konfer_collaboration", ingest_konfer.run_collaborations, deadline, min_remaining_seconds)
+    _run_source_step(results, failures, "eureka", ingest_eureka.run, deadline, min_remaining_seconds)
     _run_step(results, "duplicates_marked_inactive", mark_duplicates_inactive, deadline, min_remaining_seconds)
     _run_step(results, "expired_marked_inactive_after", mark_expired_inactive, deadline, min_remaining_seconds)
     overall_status = "failed" if len(failures) == len(SOURCE_INGEST_STEPS) else "partial_success" if failures else "success"

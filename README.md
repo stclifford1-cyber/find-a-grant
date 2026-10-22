@@ -16,6 +16,7 @@ All current sources have repeatable ingestion pipelines and are included in the 
 | Horizon Europe | `app.ingest_horizon_europe` | Uses the EU Funding & Tenders search API and stores euro values with approximate GBP conversion. |
 | CBE | `app.ingest_horizon_europe` | Circular Bio-based Europe Joint Undertaking calls arrive through the Horizon Europe ingest (they share the Horizon framework programme) and are relabelled under a dedicated CBE source for filtering. |
 | UKRI | `app.ingest_ukri` | Uses UKRI Funding Finder. Innovate-only UKRI listings are skipped to avoid duplicate Innovate UK competitions. |
+| Eureka | `app.ingest_eureka` | Reads a curated JSON dataset (`app/data/eureka_calls.json`) because the Eureka site is Cloudflare-protected with no public API. UK-eligible calls only (the UK must be a listed participating country). Refreshed by re-pulling the site and updating the JSON; the capture date is shown on each card. |
 
 ## Features
 

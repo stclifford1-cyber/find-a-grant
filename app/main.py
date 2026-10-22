@@ -133,6 +133,8 @@ SOURCE_LABELS = {
     "konfer": "Konfer",
     "Konfer": "Konfer",
     "konfer_collaboration": "Konfer Collaborations",
+    "eureka": "Eureka",
+    "eureka_not_funding": "Eureka (non-funding)",
 }
 
 SOURCE_ALIASES = {
@@ -142,6 +144,8 @@ SOURCE_ALIASES = {
     "ukri": ["ukri"],
     "konfer": ["konfer", "Konfer"],
     "konfer_collaboration": ["konfer_collaboration"],
+    "eureka": ["eureka"],
+    "eureka_not_funding": ["eureka_not_funding"],
 }
 
 SOURCE_ORDER = {
@@ -149,11 +153,13 @@ SOURCE_ORDER = {
     "ukri": 1,
     "horizon_europe": 2,
     "cbe": 3,
-    "konfer": 4,
-    "konfer_collaboration": 5,
+    "eureka": 4,
+    "konfer": 5,
+    "konfer_collaboration": 6,
+    "eureka_not_funding": 7,
 }
 
-CORE_SOURCE_FILTERS = ("innovate_uk", "ukri", "horizon_europe", "cbe", "konfer", "konfer_collaboration")
+CORE_SOURCE_FILTERS = ("innovate_uk", "ukri", "horizon_europe", "cbe", "eureka", "konfer", "konfer_collaboration")
 DEFAULT_INGEST_TIMEOUT_SECONDS = 300.0
 INGEST_TIMEOUT_ENV = "INGEST_TIMEOUT_SECONDS"
 LAST_SUCCESSFUL_INGEST_KEY = "last_successful_ingest_at"
