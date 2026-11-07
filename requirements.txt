@@ -1,4 +1,4 @@
-fastapi==0.115.11
+fastapi==0.136.3
 uvicorn==0.34.0
 SQLAlchemy==2.0.38
 Jinja2==3.1.5
