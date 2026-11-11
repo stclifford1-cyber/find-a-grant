@@ -1,38 +1,8 @@
 {
-  "captured_at": "2026-10-22",
+  "captured_at": "2026-11-11",
   "source_page": "https://www.eurekanetwork.org/programmes-and-calls/",
   "note": "UK-eligible Eureka calls only. A call is included only when the United Kingdom is a listed participating country, so UK applicants can access national funding. Funding value is left blank unless Eureka publishes a single call-level amount. Refresh by re-pulling from the Eureka site (Cloudflare-protected, no public API) and updating this file.",
   "calls": [
-    {
-      "title": "CELTIC-NEXT call for projects – Autumn 2026",
-      "programme": "Eureka Clusters",
-      "url": "https://www.eurekanetwork.org/programmes-and-calls/eureka-clusters/celtic-next-call-for-projects-autumn-2026/",
-      "opened": "2026-07-01",
-      "closes": "2026-10-26",
-      "funding_eur": null,
-      "not_funding": false,
-      "summary": "CELTIC-NEXT is the Eureka Cluster for next-generation communications and ICT. This call funds collaborative R&D projects in advanced networking, connectivity and digital technologies, delivered through participating national funding agencies."
-    },
-    {
-      "title": "Eurogia2030 – Call 31",
-      "programme": "Eureka Clusters",
-      "url": "https://www.eurekanetwork.org/programmes-and-calls/eureka-clusters/eurogia2030-call-31/",
-      "opened": "2026-07-01",
-      "closes": "2026-10-29",
-      "funding_eur": null,
-      "not_funding": false,
-      "summary": "Eurogia2030 is the Eureka Cluster for low-carbon energy. This call funds collaborative R&D projects developing low-carbon technologies that reduce climate change and support sustainable growth."
-    },
-    {
-      "title": "ITEA call for projects 2026",
-      "programme": "Eureka Clusters",
-      "url": "https://www.eurekanetwork.org/programmes-and-calls/eureka-clusters/itea-call-for-projects-2026/",
-      "opened": null,
-      "closes": "2026-11-02",
-      "funding_eur": null,
-      "not_funding": false,
-      "summary": "ITEA is the Eureka Cluster for software innovation. This call funds collaborative R&D projects in software-intensive systems and services across industry sectors."
-    },
     {
       "title": "5th Innowwide call for market feasibility projects – Autumn 2026",
       "programme": "Innowwide",
@@ -87,7 +57,7 @@
       "title": "Eurostars Call 12 for projects – deadline March 2027",
       "programme": "Eurostars",
       "url": "https://www.eurekanetwork.org/programmes-and-calls/eurostars/eurostars-call-12-for-projects-deadline-march-2027/",
-      "opened": null,
+      "opened": "2026-12-17",
       "closes": "2027-03-04",
       "funding_eur": null,
       "not_funding": false,
