@@ -216,6 +216,7 @@ def test_core_source_filters_are_available_before_every_source_has_rows() -> Non
             {"value": "horizon_europe", "label": "Horizon Europe"},
             {"value": "cbe", "label": "CBE"},
             {"value": "eureka", "label": "Eureka"},
+            {"value": "eit", "label": "EIT"},
             {"value": "konfer", "label": "Konfer"},
             {"value": "konfer_collaboration", "label": "Konfer Collaborations"},
         ]
@@ -247,6 +248,7 @@ def test_konfer_source_filter_stays_available_without_live_rows() -> None:
             {"value": "horizon_europe", "label": "Horizon Europe"},
             {"value": "cbe", "label": "CBE"},
             {"value": "eureka", "label": "Eureka"},
+            {"value": "eit", "label": "EIT"},
             {"value": "konfer", "label": "Konfer"},
             {"value": "konfer_collaboration", "label": "Konfer Collaborations"},
         ]
@@ -279,6 +281,35 @@ def test_eureka_is_a_distinct_filterable_source() -> None:
 
         chips = {c["value"]: c["label"] for c in get_sources(db)}
         assert chips["eureka"] == "Eureka"
+    finally:
+        db.close()
+
+
+def test_eit_is_a_distinct_filterable_source() -> None:
+    db = _make_session()
+    try:
+        _seed(db)
+        db.add(
+            Opportunity(
+                id="eit:sme-market-expansion-open-call-2027",
+                source="eit",
+                title="SME Market Expansion Open Call 2027",
+                url="https://www.eit.europa.eu/our-activities/opportunities/sme-market-expansion-open-call-2027",
+                opened_date=date.today(),
+                closes_date=date.today() + timedelta(days=20),
+                geographic_scope="uk_wide",
+                description="EIT Urban Mobility SME call.",
+                status="open",
+                last_seen=datetime.now(timezone.utc),
+            )
+        )
+        db.commit()
+
+        grouped = apply_filters(db, None, "eit", None, None, None, None, None, None)
+        assert _flatten(grouped) == ["eit:sme-market-expansion-open-call-2027"]
+
+        chips = {c["value"]: c["label"] for c in get_sources(db)}
+        assert chips["eit"] == "EIT"
     finally:
         db.close()
 
