@@ -1,0 +1,55 @@
+{
+  "captured_at": "2026-11-11",
+  "source_page": "https://www.eit.europa.eu/our-activities/opportunities",
+  "note": "UK-eligible EIT (European Institute of Innovation and Technology) KIC open calls only. EIT is Horizon Europe Pillar 3 and funds through sector Knowledge & Innovation Communities (KICs), each running its own calls on its own site; there is no public API, so this dataset is curated like the Eureka one. A call is included only when UK organisations are eligible, confirmed against each call's official manual and the EC list of Horizon Europe participating countries (V4.2, 07.10.2026: the United Kingdom is associated to the entire Programme, so UK entities participate under conditions equivalent to EU Member States). EIT calls that are published on the EU Funding & Tenders portal (identifiers beginning HORIZON-EIT-, including the KIC framework-partnership/business-activity grants and the European Prize for Women Innovators) are deliberately excluded: they are already ingested by the Horizon Europe source and must not be duplicated here. Refresh by re-pulling the EIT opportunities hub and each KIC site and updating this file; the capture date is shown on every card.",
+  "calls": [
+    {
+      "title": "EIT Higher Education Initiative (HEI) Call for Proposals 2026",
+      "kic": "EIT HEI Initiative",
+      "url": "https://www.eit.europa.eu/our-activities/opportunities/eit-higher-education-initiative-call-proposals-2026",
+      "opened": "2026-10-20",
+      "closes": "2027-01-13",
+      "funding_min_eur": null,
+      "funding_max_eur": 1250000,
+      "eligible_applicants": "academic,business",
+      "not_funding": false,
+      "summary": "The cross-KIC EIT Higher Education Initiative funds consortia that build innovation and entrepreneurship capacity in higher education. A project needs at least five funded partners, including at least three higher education institutions from three different Horizon Europe-eligible countries (one an EU Member State) plus at least two business or industry partners."
+    },
+    {
+      "title": "SME Market Expansion Open Call 2027",
+      "kic": "EIT Urban Mobility",
+      "url": "https://www.eit.europa.eu/our-activities/opportunities/sme-market-expansion-open-call-2027",
+      "opened": "2026-10-09",
+      "closes": "2026-12-01",
+      "funding_min_eur": 60000,
+      "funding_max_eur": 60000,
+      "eligible_applicants": "business",
+      "not_funding": false,
+      "summary": "A mono-beneficiary call from EIT Urban Mobility for SMEs that are supported by an end client, helping them bring an urban-mobility solution to a new market. Each selected SME receives a fixed lump sum of EUR 60,000. SMEs must be registered in an EU Member State or a country associated with Horizon Europe, which includes the United Kingdom."
+    },
+    {
+      "title": "New Ventures in Creative Tech (Spark)",
+      "kic": "EIT Culture & Creativity",
+      "url": "https://www.eit.europa.eu/our-activities/opportunities/new-ventures-creative-tech-spark",
+      "opened": "2026-10-06",
+      "closes": "2026-11-16",
+      "funding_min_eur": 30000,
+      "funding_max_eur": 30000,
+      "eligible_applicants": "individual",
+      "not_funding": false,
+      "summary": "An EIT Culture & Creativity incubation call for early-stage founders, individuals or small multidisciplinary teams with a creative-technology venture concept and no registered company yet. Selected ventures receive up to EUR 30,000 and must incorporate a legal entity during the programme. Applicants must be based in an EU Member State or a country officially associated with Horizon Europe, which includes the United Kingdom."
+    },
+    {
+      "title": "Proof of Concept & Technology Validation Call",
+      "kic": "EIT Food",
+      "url": "https://www.eit.europa.eu/our-activities/opportunities/proof-concept-technology-validation-call",
+      "opened": "2026-11-06",
+      "closes": "2027-01-18",
+      "funding_min_eur": null,
+      "funding_max_eur": null,
+      "eligible_applicants": "business",
+      "not_funding": false,
+      "summary": "An EIT Food Biotech Alliance call for agrifood and biotech start-ups to validate technology, with a Route 1 proof-of-concept track (TRL 4-6) and a Route 2 demonstrator track (TRL 7-9). Any legal entity is eligible to participate regardless of its place of establishment, so UK start-ups can apply; grant size is set per route rather than as a single published amount."
+    }
+  ]
+}

@@ -17,6 +17,7 @@ All current sources have repeatable ingestion pipelines and are included in the 
 | CBE | `app.ingest_horizon_europe` | Circular Bio-based Europe Joint Undertaking calls arrive through the Horizon Europe ingest (they share the Horizon framework programme) and are relabelled under a dedicated CBE source for filtering. |
 | UKRI | `app.ingest_ukri` | Uses UKRI Funding Finder. Innovate-only UKRI listings are skipped to avoid duplicate Innovate UK competitions. |
 | Eureka | `app.ingest_eureka` | Reads a curated JSON dataset (`app/data/eureka_calls.json`) because the Eureka site is Cloudflare-protected with no public API. UK-eligible calls only (the UK must be a listed participating country). Refreshed by re-pulling the site and updating the JSON; the capture date is shown on each card. |
+| EIT | `app.ingest_eit` | Reads a curated JSON dataset (`app/data/eit_calls.json`) of EIT (European Institute of Innovation and Technology) KIC open calls. EIT is Horizon Europe Pillar 3 and funds through sector KICs, each with its own site and no shared API, so the dataset is curated like Eureka's. UK-eligible calls only, confirmed against each call's official manual and the EC Horizon Europe participating-countries list. EIT calls published on the EU Funding & Tenders portal (`HORIZON-EIT-*`, including KIC framework grants and the Women Innovators prize) are excluded because the Horizon Europe source already ingests them. Refreshed by re-pulling the EIT hub and KIC sites; the capture date is shown on each card. |
 
 ## Features
 
@@ -53,6 +54,8 @@ app/
   ingest_konfer.py                Konfer ingest
   ingest_horizon_europe.py        Horizon Europe ingest
   ingest_ukri.py                  UKRI Funding Finder ingest
+  ingest_eureka.py                Eureka curated-JSON ingest
+  ingest_eit.py                   EIT KIC curated-JSON ingest
   templates/                      Jinja2 templates
   static/                         Static assets
 scripts/

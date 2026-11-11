@@ -33,6 +33,7 @@ def test_successful_ingest_records_last_successful_timestamp(monkeypatch) -> Non
     monkeypatch.setattr(ingest_all.ingest_konfer, "run", lambda: 5)
     monkeypatch.setattr(ingest_all.ingest_konfer, "run_collaborations", lambda: 6)
     monkeypatch.setattr(ingest_all.ingest_eureka, "run", lambda: 7)
+    monkeypatch.setattr(ingest_all.ingest_eit, "run", lambda: 8)
 
     results = ingest_all.run()
 
@@ -45,6 +46,7 @@ def test_successful_ingest_records_last_successful_timestamp(monkeypatch) -> Non
         "konfer": 5,
         "konfer_collaboration": 6,
         "eureka": 7,
+        "eit": 8,
         "duplicates_marked_inactive": 0,
         "expired_marked_inactive_after": 0,
         "overall_status": "success",
